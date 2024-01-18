@@ -1,0 +1,133 @@
+use strict;
+use warnings;
+#
+use App::bsky::CLI;
+exit App::bsky::CLI->new->run(@ARGV);
+
+__END__
+
+=encoding utf-8
+
+=head1 NAME
+
+bsky - A Command-line Bluesky Client
+
+=head1 SYNOPSIS
+
+    # create user session
+    $ bsky login [handle] [password]
+
+    # view recent posts
+    $ bsky timeline
+
+    # create a post
+    $ post
+
+=head1 DESCRIPTION
+
+C<bsky> is a simple command line client for Bluesky in Perl.
+
+=head1 Usage
+
+   bsky [global options] command [command options] [arguments...]
+
+=head2 Commands
+
+=over
+
+=item C<show-profile>
+
+show profile
+
+=item C<update-profile>
+
+update profile
+
+=item C<timeline>, C<tl>
+
+show timeline
+
+=item C<thread>
+
+show thread
+
+=item C<post>
+
+post new text
+
+=item C<vote>
+
+vote the post
+
+=item C<votes>
+
+show votes of the post
+
+=item C<repost>
+
+repost the post
+
+=item C<reposts>
+
+show reposts of the post
+
+=item C<follow>
+
+follow the handle
+
+=item C<follows>
+
+show follows
+
+=item C<followers>
+
+show followers
+
+=item C<delete>
+
+delete the note
+
+=item C<login>
+
+login the social
+
+=item C<help>, C<h>
+
+shows a list of commands or help for one command
+
+=back
+
+=head2 Global Options
+
+=over
+
+   -a value       profile name
+   -V             verbose (default: false)
+   --help, -h     show help
+   --version, -v  print the version
+
+=back
+
+=head1 See Also
+
+L<At>.pm
+
+L<https://github.com/mattn/bsky> - Original Golang client
+
+=head1 LICENSE
+
+Copyright (C) Sanko Robinson.
+
+This library is free software; you can redistribute it and/or modify it under the terms found in the Artistic License
+2. Other copyrights, terms, and conditions may apply to data transmitted through this module.
+
+=head1 AUTHOR
+
+Sanko Robinson E<lt>sanko@cpan.orgE<gt>
+
+=begin stopwords
+
+
+=end stopwords
+
+=cut
