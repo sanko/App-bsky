@@ -2,8 +2,11 @@ requires 'perl', '5.038000';    # class syntax
 requires 'At';
 requires 'Getopt::Long';
 requires 'Pod::Text';
+requires 'Path::Tiny';
+requires 'File::HomeDir';
+requires 'JSON::Tiny';
 on 'test' => sub {
-    requires 'Test2::V0';       # core as of 5.39.x
+    requires 'Test2::V0';    # core as of 5.39.x
 };
 on 'develop' => sub {
     requires 'Software::License::Artistic_2_0';
