@@ -7,29 +7,32 @@ package App::bsky 0.01 {
 
     class App::bsky::CLI {
 
-        method error ( $msg, $fatal //= 0 ) {
+        method err ( $msg, $fatal //= 0 ) {
             die "$msg\n" if $fatal;
             warn "$msg\n";
+            $fatal;
         }
 
         method say ($msg) {
             CORE::say $msg;
+            1;
         }
 
         method run (@args) {
-            use Data::Dump;
-            ddx \@args;
-            $self->error( 'No subcommand found. Try bsky --help', 1 ) unless @args;
+
+            #~ use Data::Dump;
+            #~ ddx \@args;
+            return $self->err( 'No subcommand found. Try bsky --help', 1 ) unless @args;
             my $cmd = shift @args;
             $cmd =~ m[^-(h|-help)$] ? $cmd = 'help' : $cmd =~ m[^-V$] ? $cmd = 'VERSION' : $cmd =~ m[^-(v|-version)$] ? $cmd = 'version' : ();
             {
                 my $cmd = $cmd;
-                $cmd =~ s[[^a-z]][]g;
+                $cmd =~ s[[^a-z]][]gi;
                 if ( my $method = $self->can( 'cmd_' . $cmd ) ) {
                     return $method->( $self, @args );
                 }
             }
-            $self->error( 'Unknown subcommand found: ' . $cmd . '. Try bsky --help', 1 ) unless @args;
+            $self->err( 'Unknown subcommand found: ' . $cmd . '. Try bsky --help', 1 ) unless @args;
         }
 
         method cmd_showprofile() {
@@ -109,10 +112,12 @@ package App::bsky 0.01 {
                     qw[archname installsitelib installsitebin installman1dir installman3dir sitearchexp sitelibexp vendorarch vendorlibexp archlibexp privlibexp]
                 ), '  %ENV:', ( map {"    $_=$ENV{$_}"} sort grep {/^PERL/} keys %ENV ), '  @INC:',
                 ( map {"    $_"} grep { ref $_ ne 'CODE' } @INC );
+            1;
         }
 
         method cmd_version() {
             $self->say($_) for 'bsky  v' . $App::bsky::VERSION, 'At.pm v' . $At::VERSION, 'perl  ' . $^V;
+            1;
         }
     }
 }
