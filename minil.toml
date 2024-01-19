@@ -5,6 +5,7 @@ static_install = "auto"
 authority = "cpan:SANKO"
 license = "artistic_2"
 markdown_maker = "Pod::Markdown::Github"
+readme_from = "script/bsky"
 
 [release]
 hooks=[

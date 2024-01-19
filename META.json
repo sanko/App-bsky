@@ -1,6 +1,6 @@
 {
    "X_No_Archive" : "Yes",
-   "abstract" : "It's new $module",
+   "abstract" : "A Command-line Bluesky Client",
    "author" : [
       "Sanko Robinson <sanko@cpan.org>"
    ],
@@ -32,18 +32,37 @@
          }
       },
       "develop" : {
+         "recommends" : {
+            "Code::TidyAll" : "0",
+            "Code::TidyAll::Plugin::PodTidy" : "0",
+            "Data::Dump" : "0",
+            "Perl::Tidy" : "0",
+            "Pod::Tidy" : "0",
+            "Test::CPAN::Meta" : "0",
+            "Test::MinimumVersion::Fast" : "0",
+            "Test::PAUSE::Permissions" : "0",
+            "Test::Pod" : "0",
+            "Test::Spellunker" : "0"
+         },
          "requires" : {
+            "CPAN::Uploader" : "0",
+            "Minilla" : "0",
+            "Pod::Markdown::Github" : "0",
+            "Software::License::Artistic_2_0" : "0",
             "Test::CPAN::Meta" : "0",
             "Test::MinimumVersion::Fast" : "0.04",
             "Test::PAUSE::Permissions" : "0.07",
             "Test::Pod" : "1.41",
-            "Test::Spellunker" : "v0.2.7"
+            "Test::Spellunker" : "v0.2.7",
+            "Version::Next" : "0"
          }
       },
       "runtime" : {
          "requires" : {
             "At" : "0",
-            "perl" : "5.008001"
+            "Getopt::Long" : "0",
+            "Pod::Text" : "0",
+            "perl" : "v5.38.0"
          }
       },
       "test" : {

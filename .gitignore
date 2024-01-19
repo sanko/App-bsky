@@ -31,3 +31,4 @@ MYMETA.*
 /.tidyall.d
 
 /App-bsky-*
+script/bsky.pl

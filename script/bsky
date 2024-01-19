@@ -1,9 +1,6 @@
-use strict;
-use warnings;
-#
-use App::bsky::CLI;
+use lib '../lib';
+use App::bsky;
 exit App::bsky::CLI->new->run(@ARGV);
-
 __END__
 
 =encoding utf-8
@@ -18,10 +15,10 @@ bsky - A Command-line Bluesky Client
     $ bsky login [handle] [password]
 
     # view recent posts
-    $ bsky timeline
+    $ bsky timeline ...
 
     # create a post
-    $ post
+    $ bsky post ...
 
 =head1 DESCRIPTION
 
