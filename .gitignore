@@ -32,3 +32,4 @@ MYMETA.*
 
 /App-bsky-*
 script/bsky.pl
+/t/temp.bsky

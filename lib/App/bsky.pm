@@ -1,16 +1,43 @@
 package App::bsky 0.01 {
     use v5.38;
+    use At::Bluesky;
     use Getopt::Long qw[];
-    use At;
     use experimental 'class';
+    no warnings 'experimental';
+    use open qw[:std :encoding(UTF-8)];
     $|++;
 
     class App::bsky::CLI {
+        use JSON::Tiny qw[/code_json/];
+        use Path::Tiny;
+        use File::HomeDir;
+        #
+        field $bsky;
+        field $config;
+        field $config_file : param //= path( File::HomeDir->my_data )->absolute->child('.bsky');
+        #
+        ADJUST {
+            $config_file = path($config_file) unless builtin::blessed $config_file;
+            $bsky        = $self->config ? At::Bluesky->resume(%$config) : At::Bluesky->new();
+        }
+
+        method config() {
+            $self->get_config if !$config && $config_file->is_file && $config_file->size;
+            $config;
+        }
+
+        method DESTROY ( $global //= 0 ) {
+            return unless $config;
+            $self->put_config;
+        }
+        #
+        method get_config() { $config = decode_json $config_file->slurp_utf8 }
+        method put_config() { $config_file->spew_utf8( encode_json $config ); }
 
         method err ( $msg, $fatal //= 0 ) {
             die "$msg\n" if $fatal;
             warn "$msg\n";
-            $fatal;
+            !$fatal;
         }
 
         method say ($msg) {
@@ -22,7 +49,7 @@ package App::bsky 0.01 {
 
             #~ use Data::Dump;
             #~ ddx \@args;
-            return $self->err( 'No subcommand found. Try bsky --help', 1 ) unless @args;
+            return $self->err( 'No subcommand found. Try bsky --help', 1 ) unless scalar @args;
             my $cmd = shift @args;
             $cmd =~ m[^-(h|-help)$] ? $cmd = 'help' : $cmd =~ m[^-V$] ? $cmd = 'VERSION' : $cmd =~ m[^-(v|-version)$] ? $cmd = 'version' : ();
             {

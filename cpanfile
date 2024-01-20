@@ -1,7 +1,7 @@
 requires 'perl', '5.038000';    # class syntax
-requires 'At';
+requires 'At',   '0.07';
 requires 'Getopt::Long';
-requires 'Pod::Text';
+requires 'Pod::Text::Color';
 requires 'Path::Tiny';
 requires 'File::HomeDir';
 requires 'JSON::Tiny';

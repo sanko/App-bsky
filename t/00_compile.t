@@ -20,7 +20,7 @@ subtest 'commands' => sub {
 };
 subtest 'internals' => sub {
     my $cli = App::bsky::CLI->new;
-    can_ok $cli, $_ for sort qw[err say run];
+    can_ok $cli, $_ for sort qw[err say run config get_config put_config DESTROY];
 };
 #
 done_testing;
