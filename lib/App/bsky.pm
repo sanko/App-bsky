@@ -71,7 +71,26 @@ package App::bsky 0.01 {
         }
 
         method cmd_timeline() {
-            ...;
+
+            #~ use Data::Dump;
+            my $tl    = $bsky->feed_getTimeline();
+            my $count = 0;
+            for my $post ( @{ $tl->{feed} } ) {    # TODO: filter where $type ne 'app.bsky.feed.post'
+
+                #~ warn ref $post;
+                #~ ddx $post->post->record->_raw;
+                #~ if (
+                $self->say( $post->post->record->text );
+                $count++;
+
+                #~ ){}
+                #~ ddx $post->_raw;
+            }
+
+            #~ method feed_getTimeline ( $algorithm //= (), $limit //= (), $cursor //= () ) {
+            $count;
+
+            #~ ...;
         }
         method cmd_tl() { $self->cmd_timeline; }
 
@@ -83,49 +102,59 @@ package App::bsky 0.01 {
             ...;
         }
 
-        method cmd_vote () {
+        method cmd_vote ( $uri, $bool //= !!1 ) {
             ...;
         }
 
-        method cmd_votes () {
+        method cmd_votes ($uri) {
             ...;
         }
 
-        method cmd_repost () {
+        method cmd_repost ($uri) {
             ...;
         }
 
-        method cmd_reposts () {
+        method cmd_reposts ($uri) {
             ...;
         }
 
-        method cmd_follow () {
+        method cmd_follow ($handle) {
             ...;
         }
 
-        method cmd_follows () {
+        method cmd_follows ($handle) {
             ...;
         }
 
-        method cmd_followers () {
+        method cmd_followers ( $user //= () ) {
             ...;
         }
 
-        method cmd_delete () {
+        method cmd_delete ($cid) {
             ...;
         }
 
-        method cmd_login ( $ident, $password ) {
-            warn 'Log in as ' . $ident;
-            ...;
+        method cmd_login ( $ident, $password, $host //= () ) {
+            $bsky = At::Bluesky->new( identifier => $ident, password => $password, defined $host ? ( _host => $host ) : () );
+            return $self->err( '', 1 ) unless $bsky->session;
+            $config = $bsky->session;
+            $self->say( $config ? 'Logged in as ' . $ident . '. [did: ' . $config->{did} . ']' : 'Failed to log in as ' . $ident );
         }
 
-        method cmd_help() {    # cribbed from App::cpm::CLI
-            use Pod::Text;
+        method cmd_help ( $command //= () ) {    # cribbed from App::cpm::CLI
             open my $fh, '>', \my $out;
-            Pod::Text->new->parse_from_file( $0, $fh );
-            $out =~ s/^[ ]{6}/    /mg;
-            $self->say($out);
+            if ( !defined $command ) {
+                use Pod::Text::Color;
+                Pod::Text::Color->new->parse_from_file( $0, $fh );
+            }
+            else {
+                BEGIN { $Pod::Usage::Formatter = 'Pod::Text::Color'; }
+                use Pod::Usage;
+                pod2usage( -output => $fh, -verbose => 99, -sections => [ 'Usage', 'Commands/' . $command ], -exitval => 'noexit' );
+            }
+            $out =~ s[^[ ]{6}][    ]mg;
+            $out =~ s[\s+$][]gs;
+            return $self->say($out);
         }
 
         method cmd_VERSION() {
@@ -160,6 +189,12 @@ App::bsky - A Command-line Bluesky Client
 =head1 SYNOPSIS
 
     $ bsky ...
+
+    $ bsky help
+
+    $ bsky help login
+
+    $ bsky login ... ...
 
 =head1 DESCRIPTION
 

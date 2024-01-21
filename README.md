@@ -26,76 +26,169 @@ $ bsky post ...
 bsky [global options] command [command options] [arguments...]
 ```
 
-## Commands
+# Commands
 
-- `show-profile`
+## show-profile
 
-    show profile
+show profile
 
-- `update-profile`
+## update-profile
 
-    update profile
+update profile
 
-- `timeline`, `tl`
+## timeline
 
-    show timeline
+show timeline
 
-- `thread`
+## thread
 
-    show thread
+show thread
 
-- `post`
+## post
 
-    post new text
+post new text
 
-- `vote`
+## vote
 
-    vote the post
+```
+bsky vote [uri] [bool]
+```
 
-- `votes`
+Vote on the post
 
-    show votes of the post
+### Options
 
-- `repost`
+```
+uri
+bool      optional, a true value (the default) votes the post up, an untrue value is a downvote
+```
 
-    repost the post
+## votes
 
-- `reposts`
+```
+bsky votes [uri]
+```
 
-    show reposts of the post
+Show votes of the post.
 
-- `follow`
+### Options
 
-    follow the handle
+```
+uri
+```
 
-- `follows`
+## repost
 
-    show follows
+```
+bsky repost [uri]
+```
 
-- `followers`
+Repost the post
 
-    show followers
+### Options
 
-- `delete`
+```
+uri
+```
 
-    delete the note
+## reposts
 
-- `login`
+```
+bsky reposts [uri]
+```
 
-    login the social
+Show reposts of the post
 
-- `help`, `h`
+### Options
 
-    shows a list of commands or help for one command
+```
+uri
+```
 
-## Global Options
+## follow
 
-> ```
-> -a value       profile name
-> -V             verbose (default: false)
-> --help, -h     show help
-> --version, -v  print the version
-> ```
+```
+bsky follow [handle]
+```
+
+Follow the handle
+
+### Options
+
+```
+handle
+```
+
+## follows
+
+```perl
+bsky follows [user]
+```
+
+Show follows.
+
+### Options
+
+```perl
+user        optional, defaults to the current logged in account
+```
+
+## followers
+
+```perl
+bsky followers [user]
+```
+
+Show followers.
+
+### Options
+
+```perl
+user        optional, defaults to the current logged in account
+```
+
+## delete
+
+```
+bsky delete [cid]
+```
+
+Delete an item.
+
+### Options
+
+```
+cid
+```
+
+## login
+
+```
+bsky login [ident] [password] [host]
+```
+
+Log into a Bluesky account.
+
+### Options
+
+```
+ident
+password
+host        optional, defaults to https://bsky.social]
+```
+
+## help
+
+shows a list of commands or help for one command
+
+# Global Options
+
+```
+-a value       profile name
+-V             verbose (default: false)
+--help, -h     show help
+--version, -v  print the version
+```
 
 # See Also
 

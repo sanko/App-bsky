@@ -28,82 +28,131 @@ C<bsky> is a simple command line client for Bluesky in Perl.
 
    bsky [global options] command [command options] [arguments...]
 
-=head2 Commands
+=head1 Commands
 
-=over
-
-=item C<show-profile>
+=head2 show-profile
 
 show profile
 
-=item C<update-profile>
+=head2 update-profile
 
 update profile
 
-=item C<timeline>, C<tl>
+=head2 timeline
 
 show timeline
 
-=item C<thread>
+=head2 thread
 
 show thread
 
-=item C<post>
+=head2 post
 
 post new text
 
-=item C<vote>
+=head2 vote
 
-vote the post
+    bsky vote [uri] [bool]
 
-=item C<votes>
+Vote on the post
 
-show votes of the post
+=head3 Options
 
-=item C<repost>
+    uri
+    bool      optional, a true value (the default) votes the post up, an untrue value is a downvote
 
-repost the post
+=head2 votes
 
-=item C<reposts>
+    bsky votes [uri]
 
-show reposts of the post
+Show votes of the post.
 
-=item C<follow>
+=head3 Options
 
-follow the handle
+    uri
 
-=item C<follows>
+=head2 repost
 
-show follows
+    bsky repost [uri]
 
-=item C<followers>
+Repost the post
 
-show followers
+=head3 Options
 
-=item C<delete>
+    uri
 
-delete the note
+=head2 reposts
 
-=item C<login>
+    bsky reposts [uri]
 
-login the social
+Show reposts of the post
 
-=item C<help>, C<h>
+=head3 Options
+
+    uri
+
+=head2 follow
+
+    bsky follow [handle]
+
+Follow the handle
+
+=head3 Options
+
+    handle
+
+=head2 follows
+
+    bsky follows [user]
+
+Show follows.
+
+=head3 Options
+
+    user        optional, defaults to the current logged in account
+
+=head2 followers
+
+    bsky followers [user]
+
+Show followers.
+
+=head3 Options
+
+    user        optional, defaults to the current logged in account
+
+=head2 delete
+
+    bsky delete [cid]
+
+Delete an item.
+
+=head3 Options
+
+    cid
+
+=head2 login
+
+    bsky login [ident] [password] [host]
+
+Log into a Bluesky account.
+
+=head3 Options
+
+    ident
+    password
+    host        optional, defaults to https://bsky.social]
+
+=head2 help
 
 shows a list of commands or help for one command
 
-=back
-
-=head2 Global Options
-
-=over
+=head1 Global Options
 
    -a value       profile name
    -V             verbose (default: false)
    --help, -h     show help
    --version, -v  print the version
-
-=back
 
 =head1 See Also
 
