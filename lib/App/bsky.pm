@@ -1,7 +1,6 @@
 package App::bsky 0.01 {
     use v5.38;
     use At::Bluesky;
-    use Getopt::Long qw[];
     use experimental 'class';
     no warnings 'experimental';
     use open qw[:std :encoding(UTF-8)];
@@ -11,6 +10,7 @@ package App::bsky 0.01 {
         use JSON::Tiny qw[/code_json/];
         use Path::Tiny;
         use File::HomeDir;
+        use Getopt::Long qw[GetOptionsFromArray];
         #
         field $bsky;
         field $config;
@@ -70,7 +70,8 @@ package App::bsky 0.01 {
             ...;
         }
 
-        method cmd_timeline() {
+        method cmd_timeline (@args) {
+            GetOptionsFromArray( \@args, 'json!' => \my $json );
 
             #~ use Data::Dump;
             my $tl    = $bsky->feed_getTimeline();
@@ -80,7 +81,7 @@ package App::bsky 0.01 {
                 #~ warn ref $post;
                 #~ ddx $post->post->record->_raw;
                 #~ if (
-                $self->say( $post->post->record->text );
+                $self->say( $json ? JSON::Tiny::to_json( $post->_raw ) : $post->post->record->text );
                 $count++;
 
                 #~ ){}
@@ -92,7 +93,7 @@ package App::bsky 0.01 {
 
             #~ ...;
         }
-        method cmd_tl() { $self->cmd_timeline; }
+        method cmd_tl (@args) { $self->cmd_timeline(@args); }
 
         method cmd_thread () {
             ...;
@@ -187,6 +188,8 @@ __END__
 App::bsky - A Command-line Bluesky Client
 
 =head1 SYNOPSIS
+
+    bsky [global options] command [command options] [arguments...]
 
     $ bsky ...
 

@@ -40,7 +40,15 @@ update profile
 
 =head2 timeline
 
-show timeline
+    bsky timeline
+
+    bsky timeline --json
+
+Display posts from timeline.
+
+=head3 Options
+
+    --json      boolean flag; content is printed as JSON objects if given
 
 =head2 thread
 

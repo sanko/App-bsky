@@ -38,7 +38,19 @@ update profile
 
 ## timeline
 
-show timeline
+```
+bsky timeline
+
+bsky timeline --json
+```
+
+Display posts from timeline.
+
+### Options
+
+```
+--json      boolean flag; content is printed as JSON objects if given
+```
 
 ## thread
 
