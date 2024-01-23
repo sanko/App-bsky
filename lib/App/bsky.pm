@@ -102,6 +102,7 @@ package App::bsky 0.01 {
 
         method cmd_timeline (@args) {
             GetOptionsFromArray( \@args, 'json!' => \my $json );
+
             #~ use Data::Dump;
             my $tl = $bsky->feed_getTimeline();
 
@@ -181,11 +182,18 @@ package App::bsky 0.01 {
             ...;
         }
 
-        method cmd_login ( $ident, $password, $host //= () ) {
+        method cmd_login ( $ident, $password, @args ) {
+            GetOptionsFromArray( \@args, 'host=s' => \my $host );
             $bsky = At::Bluesky->new( identifier => $ident, password => $password, defined $host ? ( _host => $host ) : () );
             return $self->err( '', 1 ) unless $bsky->session;
             $config->{session} = $bsky->session;
-            $self->say( $config ? 'Logged in as ' . color('red') . $ident . color('reset') . ' [' . $config->{session}{did} . ']' :
+            $self->say( $config ?
+                    'Logged in' .
+                    ( $host ? ' at ' . $host : '' ) . ' as ' .
+                    color('red') .
+                    $ident .
+                    color('reset') . ' [' .
+                    $config->{session}{did} . ']' :
                     'Failed to log in as ' . $ident );
         }
 

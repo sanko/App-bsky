@@ -176,7 +176,7 @@ cid
 ## login
 
 ```
-bsky login [ident] [password] [host]
+bsky login [ident] [password] [--host http://bsky.social]
 ```
 
 Log into a Bluesky account.
@@ -186,7 +186,7 @@ Log into a Bluesky account.
 ```
 ident
 password
-host        optional, defaults to https://bsky.social]
+--host        optional, defaults to https://bsky.social
 ```
 
 ## help

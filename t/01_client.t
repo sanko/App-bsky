@@ -15,11 +15,8 @@ my $mock = mock 'App::bsky::CLI' => (
             !$fatal;
         },
         say => sub ( $self, $msg, @etc ) {
-
-            #~ note $line;
-            #~ use Data::Dump;
-            #~ ddx \@etc;
-            push @say, @etc ? sprintf $msg, @etc : $msg // '';
+            note @etc ? sprintf $msg, @etc : $msg;
+            push @say, @etc ? sprintf $msg, @etc : $msg;
             1;
         }
     ]
@@ -58,8 +55,8 @@ subtest 'login ... ... (error)' => sub {
     }, qr[Error creating session], 'warns on bad auth info';
     ok !$client, 'client is undef';
 };
-ok new_client->run(qw[login atperl.bsky.social ck2f-bqxl-h54l-xm3l]),                     'login ... ...';
-ok new_client->run(qw[login atperl.bsky.social ck2f-bqxl-h54l-xm3l https://bsky.social]), 'login ... ... ...';
+ok new_client->run(qw[login atperl.bsky.social ck2f-bqxl-h54l-xm3l]),                            'login ... ...';
+ok new_client->run(qw[login atperl.bsky.social ck2f-bqxl-h54l-xm3l --host https://bsky.social]), 'login ... ... --host ...';
 note 'the following are using the automatic resume data';
 ok new_client->run(qw[tl]), 'timeline';
 like is_say { new_client->run(qw[tl --json]) }, qr[^{], 'timeline --json';
