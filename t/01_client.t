@@ -9,15 +9,17 @@ use Test2::Tools::Warnings qw[warns];
 my ( @err, @say );
 my $mock = mock 'App::bsky::CLI' => (
     override => [
-        err => sub ( $self, $line, $fatal //= 0 ) {
-            note $line;
-            push @err, $line;
+        err => sub ( $self, $msg, $fatal //= 0 ) {
+            note $msg;
+            push @err, $msg;
             !$fatal;
         },
-        say => sub ( $self, $line ) {
+        say => sub ( $self, $msg, @etc ) {
 
             #~ note $line;
-            push @say, $line;
+            #~ use Data::Dump;
+            #~ ddx \@etc;
+            push @say, @etc ? sprintf $msg, @etc : $msg // '';
             1;
         }
     ]
@@ -29,14 +31,14 @@ my $mock = mock 'App::bsky::CLI' => (
         my $code = shift;
         @err = ();
         $code->();
-        join "\n", @err;
+        wantarray ? @err : join "\n", @err;
     }
 
     sub is_say(&) {
         my $code = shift;
         @say = ();
         $code->();
-        join "\n", @say;
+        wantarray ? @say : join "\n", @say;
     }
 }
 my $tmp = Path::Tiny->tempfile('.bsky.XXXXX');

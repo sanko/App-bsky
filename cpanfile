@@ -1,10 +1,12 @@
 requires 'perl', '5.038000';    # class syntax
-requires 'At',   '0.07';
+requires 'At',   '0.08';
 requires 'Getopt::Long';
 requires 'Pod::Text::Color';
 requires 'Path::Tiny';
 requires 'File::HomeDir';
 requires 'JSON::Tiny';
+requires 'MIME::Base64';
+requires 'Term::ANSIColor';
 on 'test' => sub {
     requires 'Test2::V0';    # core as of 5.39.x
 };

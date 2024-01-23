@@ -59,12 +59,14 @@
       },
       "runtime" : {
          "requires" : {
-            "At" : "0.07",
+            "At" : "0.08",
             "File::HomeDir" : "0",
             "Getopt::Long" : "0",
             "JSON::Tiny" : "0",
+            "MIME::Base64" : "0",
             "Path::Tiny" : "0",
             "Pod::Text::Color" : "0",
+            "Term::ANSIColor" : "0",
             "perl" : "v5.38.0"
          }
       },

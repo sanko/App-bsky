@@ -1,5 +1,6 @@
 package App::bsky 0.01 {
     use v5.38;
+    use utf8;
     use At::Bluesky;
     use experimental 'class';
     no warnings 'experimental';
@@ -11,6 +12,7 @@ package App::bsky 0.01 {
         use Path::Tiny;
         use File::HomeDir;
         use Getopt::Long qw[GetOptionsFromArray];
+        use Term::ANSIColor;
         #
         field $bsky;
         field $config;
@@ -18,7 +20,35 @@ package App::bsky 0.01 {
         #
         ADJUST {
             $config_file = path($config_file) unless builtin::blessed $config_file;
-            $bsky        = $self->config ? At::Bluesky->resume(%$config) : At::Bluesky->new();
+            $self->config;
+            if ($config) {    # Check if the tokens are expired...
+
+                sub _decode_token ($token) {
+                    use MIME::Base64 qw[decode_base64];
+                    my ( $header, $payload, $sig ) = split /\./, $token;
+                    $payload =~ tr[-_][+/];    # Replace Base64-URL characters with standard Base64
+                    decode_json decode_base64 $payload;
+                }
+                my $access = _decode_token $config->{session}{accessJwt};
+                if ( $access->{exp} < time ) {
+                    $config->{session}{accessJwt} = $config->{session}{refreshJwt};
+                    $bsky                         = At::Bluesky->resume( %{ $config->{session} } );
+                    $config->{session}            = $bsky->server_refreshSession( $config->{session}{refreshJwt} );
+                    my $refresh = _decode_token $config->{session}{refreshJwt};
+                    if ( $refresh->{exp} > time ) {
+                        $bsky->resume( %{ $bsky->server_refreshSession( $config->{session}{refreshJwt} ) } );
+                    }
+                    else {
+                        $self->err('Please log in');
+                    }
+                }
+                else {
+                    $bsky = At::Bluesky->resume( %{ $config->{session} } );
+                }
+            }
+            else {
+                $bsky = At::Bluesky->new();
+            }
         }
 
         method config() {
@@ -40,8 +70,8 @@ package App::bsky 0.01 {
             !$fatal;
         }
 
-        method say ($msg) {
-            CORE::say $msg;
+        method say ( $msg, @etc ) {
+            CORE::say @etc ? sprintf $msg, @etc : $msg;
             1;
         }
 
@@ -72,26 +102,42 @@ package App::bsky 0.01 {
 
         method cmd_timeline (@args) {
             GetOptionsFromArray( \@args, 'json!' => \my $json );
-
             #~ use Data::Dump;
-            my $tl    = $bsky->feed_getTimeline();
-            my $count = 0;
-            for my $post ( @{ $tl->{feed} } ) {    # TODO: filter where $type ne 'app.bsky.feed.post'
+            my $tl = $bsky->feed_getTimeline();
 
-                #~ warn ref $post;
-                #~ ddx $post->post->record->_raw;
-                #~ if (
-                $self->say( $json ? JSON::Tiny::to_json( $post->_raw ) : $post->post->record->text );
-                $count++;
-
-                #~ ){}
-                #~ ddx $post->_raw;
+            #$algorithm //= (), $limit //= (), $cursor //= ()
+            if ($json) {
+                $self->say( JSON::Tiny::to_json( $_->_raw ) ) for @{ $tl->{feed} };
             }
+            else {    # TODO: filter where $type ne 'app.bsky.feed.post'
 
-            #~ method feed_getTimeline ( $algorithm //= (), $limit //= (), $cursor //= () ) {
-            $count;
+                sub _dump_post ( $self, $depth, $post ) {
 
-            #~ ...;
+                    # TODO: Support image embeds as raw links
+                    $self->say(
+                        '%s%s%s%s%s (%s)',
+                        ( ' ' x ( $depth * 4 ) ),
+                        color('red'), $post->author->handle->_raw,
+                        color('reset'),
+                        defined $post->author->displayName ? ' [' . $post->author->displayName . ']' : '',
+                        $post->record->createdAt->_raw
+                    );
+                    $self->say( '%s%s', ( ' ' x ( $depth * 4 ) ), $post->record->text );
+                    $self->say( '%s 👍(%d) ⚡(%d) 🔄(%d)', ( ' ' x ( $depth * 4 ) ), $post->likeCount, $post->replyCount, $post->repostCount );
+                    $self->say('');
+                }
+                for my $post ( reverse @{ $tl->{feed} } ) {
+
+                    #~ ddx $post->_raw;
+                    my $depth = 0;
+                    if ( $post->reply ) {
+                        _dump_post( $self, $depth, $post->reply->parent );
+                        $depth = 1;
+                    }
+                    _dump_post( $self, $depth, $post->post );
+                }
+            }
+            scalar @{ $tl->{feed} };
         }
         method cmd_tl (@args) { $self->cmd_timeline(@args); }
 
@@ -138,8 +184,9 @@ package App::bsky 0.01 {
         method cmd_login ( $ident, $password, $host //= () ) {
             $bsky = At::Bluesky->new( identifier => $ident, password => $password, defined $host ? ( _host => $host ) : () );
             return $self->err( '', 1 ) unless $bsky->session;
-            $config = $bsky->session;
-            $self->say( $config ? 'Logged in as ' . $ident . '. [did: ' . $config->{did} . ']' : 'Failed to log in as ' . $ident );
+            $config->{session} = $bsky->session;
+            $self->say( $config ? 'Logged in as ' . color('red') . $ident . color('reset') . ' [' . $config->{session}{did} . ']' :
+                    'Failed to log in as ' . $ident );
         }
 
         method cmd_help ( $command //= () ) {    # cribbed from App::cpm::CLI
