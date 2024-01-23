@@ -229,11 +229,15 @@ shows a list of commands or help for one command
 
 # Configuration
 
-Current configuration values include
+Current configuration values include:
 
-## `wrap`
+- `wrap`
 
-Sets word wrap width in characters for terminal output. The defaultis `0` which disables word wrap.
+    ```
+    bsky config wrap 100
+    ```
+
+    Sets word wrap width in characters for terminal output. The default is `72`.
 
 # See Also
 

@@ -56,7 +56,7 @@ package App::bsky 0.01 {
 
         method config() {
             $self->get_config if !$config && $config_file->is_file && $config_file->size;
-            $config->{settings} //= { wrap => 0 };
+            $config->{settings} //= { wrap => 72 };
             $config;
         }
 

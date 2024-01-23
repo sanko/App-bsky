@@ -185,11 +185,17 @@ shows a list of commands or help for one command
 
 =head1 Configuration
 
-Current configuration values include
+Current configuration values include:
 
-=head2 C<wrap>
+=over
 
-Sets word wrap width in characters for terminal output. The defaultis C<0> which disables word wrap.
+=item C<wrap>
+
+    bsky config wrap 100
+
+Sets word wrap width in characters for terminal output. The default is C<72>.
+
+=back
 
 =head1 See Also
 
