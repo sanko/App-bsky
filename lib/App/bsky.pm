@@ -81,7 +81,7 @@ package App::bsky 0.01 {
         method say ( $msg, @etc ) {
             $Text::Wrap::columns = $config->{settings}{wrap};
             $msg = @etc ? sprintf $msg, @etc : $msg;
-            my $indent = $msg =~ /^(\s*).*$/ ? $1 : '';
+            my $indent = $msg =~ /^(\s*)/ ? $1 : '';
             $msg = Text::Wrap::wrap( '', $indent, $msg ) if length $msg && $config->{settings}{wrap};
             CORE::say $msg;
             1;
@@ -130,15 +130,15 @@ package App::bsky 0.01 {
                     # TODO: Support image embeds as raw links
                     $self->say(
                         '%s%s%s%s%s (%s)',
-                        ( ' ' x ( $depth * 4 ) ),
+                        ' ' x ( $depth * 4 ),
                         color('red'), $post->author->handle->_raw,
                         color('reset'),
                         defined $post->author->displayName ? ' [' . $post->author->displayName . ']' : '',
                         $post->record->createdAt->_raw
                     );
-                    $self->say( '%s%s', ( ' ' x ( $depth * 4 ) ), $post->record->text );
-                    $self->say( '%s 👍(%d) ⚡(%d) 🔄(%d)', ( ' ' x ( $depth * 4 ) ), $post->likeCount, $post->replyCount, $post->repostCount );
-                    $self->say('');
+                    $self->say( '%s%s',                 ' ' x ( $depth * 4 ), $post->record->text );
+                    $self->say( '%s 👍(%d) ⚡(%d) 🔄(%d)', ' ' x ( $depth * 4 ), $post->likeCount, $post->replyCount, $post->repostCount );
+                    $self->say( '%s',                   ' ' x ( $depth * 4 ) );
                 }
                 for my $post ( reverse @{ $tl->{feed} } ) {
 
@@ -154,7 +154,12 @@ package App::bsky 0.01 {
             scalar @{ $tl->{feed} };
         }
         method cmd_tl (@args) { $self->cmd_timeline(@args); }
-        method cmd_stream()   { }
+
+        method cmd_stream() {
+
+            # Mojo::UserAgent is triggering 'Subroutine attributes must come before the signature' bug in perl 5.38.x
+            return $self->err('Streaming client requires Mojo::UserAgent') unless $Mojo::UserAgent::VERSION;
+        }
 
         method cmd_thread () {
             ...;
