@@ -7,6 +7,7 @@ requires 'File::HomeDir';
 requires 'JSON::Tiny';
 requires 'MIME::Base64';
 requires 'Term::ANSIColor';
+requires 'Text::Wrap';
 on 'test' => sub {
     requires 'Test2::V0';    # core as of 5.39.x
 };

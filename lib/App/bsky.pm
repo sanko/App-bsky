@@ -13,6 +13,7 @@ package App::bsky 0.01 {
         use File::HomeDir;
         use Getopt::Long qw[GetOptionsFromArray];
         use Term::ANSIColor;
+        use Text::Wrap;
         #
         field $bsky;
         field $config;
@@ -21,8 +22,10 @@ package App::bsky 0.01 {
         ADJUST {
             $config_file = path($config_file) unless builtin::blessed $config_file;
             $self->config;
-            if ($config) {    # Check if the tokens are expired...
+            if ( defined $config->{session}{accessJwt} ) {    # Check if the tokens are expired...
 
+                #~ use Data::Dump;
+                #~ ddx $config;
                 sub _decode_token ($token) {
                     use MIME::Base64 qw[decode_base64];
                     my ( $header, $payload, $sig ) = split /\./, $token;
@@ -53,6 +56,7 @@ package App::bsky 0.01 {
 
         method config() {
             $self->get_config if !$config && $config_file->is_file && $config_file->size;
+            $config->{settings} //= { wrap => 0 };
             $config;
         }
 
@@ -61,17 +65,25 @@ package App::bsky 0.01 {
             $self->put_config;
         }
         #
-        method get_config() { $config = decode_json $config_file->slurp_utf8 }
+        method get_config() {
+            $config = decode_json $config_file->slurp_utf8;
+        }
         method put_config() { $config_file->spew_utf8( encode_json $config ); }
 
         method err ( $msg, $fatal //= 0 ) {
+            $Text::Wrap::columns = $config->{settings}{wrap};
+            $msg = Text::Wrap::wrap( '', '', $msg ) if length $msg && $config->{settings}{wrap};
             die "$msg\n" if $fatal;
             warn "$msg\n";
             !$fatal;
         }
 
         method say ( $msg, @etc ) {
-            CORE::say @etc ? sprintf $msg, @etc : $msg;
+            $Text::Wrap::columns = $config->{settings}{wrap};
+            $msg = @etc ? sprintf $msg, @etc : $msg;
+            my $indent = $msg =~ /^(\s*).*$/ ? $1 : '';
+            $msg = Text::Wrap::wrap( '', $indent, $msg ) if length $msg && $config->{settings}{wrap};
+            CORE::say $msg;
             1;
         }
 
@@ -142,13 +154,17 @@ package App::bsky 0.01 {
             scalar @{ $tl->{feed} };
         }
         method cmd_tl (@args) { $self->cmd_timeline(@args); }
-        method stream()       { }
+        method cmd_stream()   { }
 
         method cmd_thread () {
             ...;
         }
 
         method cmd_post () {
+            ...;
+        }
+
+        method cmd_delete ($cid) {
             ...;
         }
 
@@ -196,10 +212,6 @@ package App::bsky 0.01 {
             ...;
         }
 
-        method cmd_delete ($cid) {
-            ...;
-        }
-
         method cmd_login ( $ident, $password, @args ) {
             GetOptionsFromArray( \@args, 'host=s' => \my $host );
             $bsky = At::Bluesky->new( identifier => $ident, password => $password, defined $host ? ( _host => $host ) : () );
@@ -237,6 +249,28 @@ package App::bsky 0.01 {
 
         method cmd_revokeapppassword ($handle) {
             ...;
+        }
+
+        method cmd_config ( $field //= (), $value //= () ) {
+            unless ( defined $field ) {
+                $self->say('Current config:');
+                for my $k ( sort keys %{ $config->{settings} } ) {
+                    $self->say( '  %-20s %s', $k . ':', $config->{settings}{$k} );
+                }
+            }
+            elsif ( defined $field && defined $config->{settings}{$field} ) {
+                if ( defined $value ) {
+                    $config->{settings}{$field} = $value;
+                    $self->say( 'Config value %s set to %s', $field, $value );
+                }
+                else {
+                    $self->say( $config->{settings}{$field} );
+                }
+            }
+            else {
+                return $self->err( 'Unknown config field: ' . $field, 1 );
+            }
+            return 1;
         }
 
         method cmd_help ( $command //= () ) {    # cribbed from App::cpm::CLI

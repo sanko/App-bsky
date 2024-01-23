@@ -30,6 +30,24 @@ C<bsky> is a simple command line client for Bluesky in Perl.
 
 =head1 Commands
 
+=head2 config
+
+    # Print all configuration values
+    bsky config
+
+    # Print a single config value and exit
+    bsky config wrap
+
+    # Set a configuration value
+    bsky config wrap 100
+
+View or change configuration values. See L<Configuration|/Configuration> for a list of current options.
+
+=head3 Options
+
+    key         optional
+    value       optional
+
 =head2 show-profile
 
 show profile
@@ -43,6 +61,9 @@ update profile
     bsky timeline
 
     bsky timeline --json
+
+    # shorthand:
+    bsky tl
 
 Display posts from timeline.
 
@@ -161,6 +182,14 @@ shows a list of commands or help for one command
    -V             verbose (default: false)
    --help, -h     show help
    --version, -v  print the version
+
+=head1 Configuration
+
+Current configuration values include
+
+=head2 C<wrap>
+
+Sets word wrap width in characters for terminal output. The defaultis C<0> which disables word wrap.
 
 =head1 See Also
 

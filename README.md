@@ -28,6 +28,28 @@ bsky [global options] command [command options] [arguments...]
 
 # Commands
 
+## config
+
+```
+# Print all configuration values
+bsky config
+
+# Print a single config value and exit
+bsky config wrap
+
+# Set a configuration value
+bsky config wrap 100
+```
+
+View or change configuration values. See [Configuration](#configuration) for a list of current options.
+
+### Options
+
+```
+key         optional
+value       optional
+```
+
 ## show-profile
 
 show profile
@@ -42,6 +64,9 @@ update profile
 bsky timeline
 
 bsky timeline --json
+
+# shorthand:
+bsky tl
 ```
 
 Display posts from timeline.
@@ -201,6 +226,14 @@ shows a list of commands or help for one command
 --help, -h     show help
 --version, -v  print the version
 ```
+
+# Configuration
+
+Current configuration values include
+
+## `wrap`
+
+Sets word wrap width in characters for terminal output. The defaultis `0` which disables word wrap.
 
 # See Also
 

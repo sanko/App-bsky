@@ -5,18 +5,23 @@ use lib '../lib';
 use App::bsky;
 use Path::Tiny;
 use Test2::Tools::Warnings qw[warns];
+use Text::Wrap;
 #
 my ( @err, @say );
 my $mock = mock 'App::bsky::CLI' => (
     override => [
         err => sub ( $self, $msg, $fatal //= 0 ) {
+            $Text::Wrap::columns //= 72;
+            $msg = Text::Wrap::wrap( '', '', $msg );
             note $msg;
             push @err, $msg;
             !$fatal;
         },
         say => sub ( $self, $msg, @etc ) {
-            note @etc ? sprintf $msg, @etc : $msg;
-            push @say, @etc ? sprintf $msg, @etc : $msg;
+            $Text::Wrap::columns //= 72;
+            $msg = Text::Wrap::wrap( '', '', @etc ? sprintf $msg, @etc : $msg );
+            note $msg;
+            push @say, $msg;
             1;
         }
     ]
@@ -43,11 +48,15 @@ my $tmp = Path::Tiny->tempfile('.bsky.XXXXX');
 sub new_client { App::bsky::CLI->new( config_file => $tmp ) }
 isa_ok new_client(), ['App::bsky::CLI'];
 #
-ok !new_client->run(),           '(no params)';
-ok !new_client->run('fdsaf'),    'fdsaf';
-ok new_client->run('-V'),        '-V';
-ok new_client->run('--version'), '--version';
-ok new_client->run('-h'),        '-h';
+ok !new_client->run(),                   '(no params)';
+ok !new_client->run('fdsaf'),            'fdsaf';
+ok new_client->run('-V'),                '-V';
+ok new_client->run('--version'),         '--version';
+ok new_client->run('-h'),                '-h';
+ok new_client->run('config'),            'config';
+ok !new_client->run(qw[config fake]),    'config fake';
+ok new_client->run(qw[config wrap 100]), 'config wrap 100';
+ok new_client->run(qw[config wrap]),     'config wrap';
 subtest 'login ... ... (error)' => sub {
     my $client;
     like warning {
