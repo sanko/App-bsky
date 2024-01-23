@@ -99,6 +99,7 @@ package App::bsky 0.01 {
         method cmd_updateprofile() {
             ...;
         }
+        method cmd_showsession() { }
 
         method cmd_timeline (@args) {
             GetOptionsFromArray( \@args, 'json!' => \my $json );
@@ -141,6 +142,7 @@ package App::bsky 0.01 {
             scalar @{ $tl->{feed} };
         }
         method cmd_tl (@args) { $self->cmd_timeline(@args); }
+        method stream()       { }
 
         method cmd_thread () {
             ...;
@@ -170,11 +172,27 @@ package App::bsky 0.01 {
             ...;
         }
 
+        method cmd_unfollow ($handle) {
+            ...;
+        }
+
         method cmd_follows ($handle) {
             ...;
         }
 
         method cmd_followers ( $user //= () ) {
+            ...;
+        }
+
+        method cmd_block ($handle) {
+            ...;
+        }
+
+        method cmd_unblock ($handle) {
+            ...;
+        }
+
+        method cmd_blocks () {
             ...;
         }
 
@@ -197,6 +215,30 @@ package App::bsky 0.01 {
                     'Failed to log in as ' . $ident );
         }
 
+        method cmd_notifications ($handle) {
+            ...;
+        }
+
+        method cmd_notif ($handle) {
+            ...;
+        }
+
+        method cmd_invitecodes () {
+            ...;
+        }
+
+        method cmd_listapppasswords ($handle) {
+            ...;
+        }
+
+        method cmd_addapppassword ($handle) {
+            ...;
+        }
+
+        method cmd_revokeapppassword ($handle) {
+            ...;
+        }
+
         method cmd_help ( $command //= () ) {    # cribbed from App::cpm::CLI
             open my $fh, '>', \my $out;
             if ( !defined $command ) {
@@ -206,6 +248,8 @@ package App::bsky 0.01 {
             else {
                 BEGIN { $Pod::Usage::Formatter = 'Pod::Text::Color'; }
                 use Pod::Usage;
+                $command = 'timeline'      if $command eq 'tl';
+                $command = 'notifications' if $command eq 'notif';
                 pod2usage( -output => $fh, -verbose => 99, -sections => [ 'Usage', 'Commands/' . $command ], -exitval => 'noexit' );
             }
             $out =~ s[^[ ]{6}][    ]mg;
