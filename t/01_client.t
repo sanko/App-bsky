@@ -74,7 +74,12 @@ like is_say { new_client->run(qw[show-profile --json]) },                      q
 like is_say { new_client->run(qw[show-profile --handle sankor.bsky.social]) }, qr[sankor.bsky.social], 'show-profile --handle sankor.bsky.social';
 like is_say { new_client->run(qw[show-profile --json --handle sankor.bsky.social]) }, qr["sankor], 'show-profile --json --handle sankor.bsky.social';
 like is_say { new_client->run(qw[show-profile --json -H sankor.bsky.social]) },       qr["sankor], 'show-profile --json -H sankor.bsky.social';
-#
+like is_say { new_client->run(qw[follows]) },                                         qr[atproto.com], 'follows';
+like is_say { new_client->run(qw[follows --json]) },                                  qr[^{],          'follows --json';
+like is_say { new_client->run(qw[follows --handle sankor.bsky.social]) },             qr[atproto.com], 'follows --handle sankor.bsky.social';
+like is_say { new_client->run(qw[follows --json --handle sankor.bsky.social]) },      qr["bsky.app"],  'follows --json --handle sankor.bsky.social';
+like is_say { new_client->run(qw[follows --json -H sankor.bsky.social]) },            qr["bsky.app"],  'follows --json -H sankor.bsky.social';
+##
 done_testing;
 __END__
 =pod

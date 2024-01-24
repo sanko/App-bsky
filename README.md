@@ -174,8 +174,12 @@ handle
 
 ## follows
 
-```perl
-bsky follows [user]
+```
+bsky follows
+
+bsky follows --handle sankor.bsky.social
+
+bsky follows --json
 ```
 
 Show follows.
@@ -183,7 +187,9 @@ Show follows.
 ### Options
 
 ```perl
-user        optional, defaults to the current logged in account
+--handle handle     user handle; defaults to the logged in account
+-H handle           alternative to --handle
+--json              boolean flag; content is printed as JSON objects if given
 ```
 
 ## followers

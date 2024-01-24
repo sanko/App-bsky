@@ -86,7 +86,7 @@ package App::bsky 0.01 {
         method get_config() {
             $config = decode_json $config_file->slurp_utf8;
         }
-        method put_config() { $config_file->spew_utf8( encode_json $config ); }
+        method put_config() { $config_file->spew_utf8( JSON::Tiny::to_json $config ); }
 
         method err ( $msg, $fatal //= 0 ) {
             $Text::Wrap::columns = $config->{settings}{wrap};
@@ -236,8 +236,28 @@ package App::bsky 0.01 {
             ...;
         }
 
-        method cmd_follows ($handle) {
-            ...;
+        method cmd_follows (@args) {
+            GetOptionsFromArray( \@args, 'json!' => \my $json, 'handle|H=s' => \my $handle );
+            my @follows;
+            my $cursor = ();
+            do {
+                my $follows = $bsky->graph_getFollows( $handle // $config->{session}{handle}, 100, $cursor );
+                push @follows, @{ $follows->{follows} };
+                $cursor = $follows->{cursor};
+            } while ($cursor);
+            if ($json) {
+                $self->say( JSON::Tiny::to_json $_->_raw ) for @follows;
+            }
+            else {
+                for my $follow (@follows) {
+                    $self->say(
+                        sprintf '%s%s%s%s %s%s%s',
+                        color('red'),  $follow->handle->_raw, color('reset'), defined $follow->displayName ? ' [' . $follow->displayName . ']' : '',
+                        color('blue'), $follow->did->_raw,    color('reset')
+                    );
+                }
+            }
+            return scalar @follows;
         }
 
         method cmd_followers ( $user //= () ) {
