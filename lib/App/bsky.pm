@@ -37,6 +37,7 @@ package App::bsky 0.01 {
                     $config->{session}{accessJwt} = $config->{session}{refreshJwt};
                     $bsky                         = At::Bluesky->resume( %{ $config->{session} } );
                     $config->{session}            = $bsky->server_refreshSession( $config->{session}{refreshJwt} );
+                    $config->{session}{did}       = $config->{session}{did}->_raw;
                     my $refresh = _decode_token $config->{session}{refreshJwt};
                     if ( $refresh->{exp} > time ) {
                         $bsky->resume( %{ $bsky->server_refreshSession( $config->{session}{refreshJwt} ) } );
@@ -136,11 +137,15 @@ package App::bsky 0.01 {
                         defined $post->author->displayName ? ' [' . $post->author->displayName . ']' : '',
                         $post->record->createdAt->_raw
                     );
+                    if ( $post->embed && defined $post->embed->_raw->{images} )
+                    {    # TODO: Check $post->embed->$type to match 'app.bsky.embed.images#view'
+                        $self->say( '%s%s', ' ' x ( $depth * 4 ), $_->{fullsize} ) for @{ $post->embed->_raw->{images} };
+                    }
                     $self->say( '%s%s',                 ' ' x ( $depth * 4 ), $post->record->text );
                     $self->say( '%s 👍(%d) ⚡(%d) 🔄(%d)', ' ' x ( $depth * 4 ), $post->likeCount, $post->replyCount, $post->repostCount );
                     $self->say( '%s',                   ' ' x ( $depth * 4 ) );
                 }
-                for my $post ( reverse @{ $tl->{feed} } ) {
+                for my $post ( @{ $tl->{feed} } ) {
 
                     #~ ddx $post->_raw;
                     my $depth = 0;
