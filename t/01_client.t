@@ -92,10 +92,13 @@ subtest 'followers' => sub {    # These tests might fail! I cannot control who f
 subtest 'follow/unfollow' => sub {
     like is_say { new_client->run(qw[follow sankor.bsky.social]) }, qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.graph.follow],
         'follow sankor.bsky.social';
+    sleep 1;    # sometimes the service has to catch up
     like is_say { new_client->run(qw[unfollow sankor.bsky.social]) }, qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.graph.follow],
         'unfollow sankor.bsky.social';
+    sleep 1;    # sometimes the service has to catch up
     like is_say { new_client->run(qw[follow did:plc:2lk3pbakx2erxgotvzyeuyem]) }, qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.graph.follow],
         'follow did:plc:2lk3pbakx2erxgotvzyeuyem';
+    sleep 1;    # sometimes the service has to catch up
     like is_say { new_client->run(qw[unfollow did:plc:2lk3pbakx2erxgotvzyeuyem]) }, qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.graph.follow],
         'unfollow did:plc:2lk3pbakx2erxgotvzyeuyem';
 };

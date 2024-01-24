@@ -59,7 +59,7 @@
       },
       "runtime" : {
          "requires" : {
-            "At" : "0.08",
+            "At" : "0.09",
             "File::HomeDir" : "0",
             "Getopt::Long" : "0",
             "JSON::Tiny" : "0",
