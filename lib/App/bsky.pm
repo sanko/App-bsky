@@ -280,8 +280,29 @@ package App::bsky 0.01 {
             return scalar @follows;
         }
 
-        method cmd_followers ( $user //= () ) {
-            ...;
+        method cmd_followers (@args) {
+            GetOptionsFromArray( \@args, 'json!' => \my $json, 'handle|H=s' => \my $handle );
+            my @followers;
+            my $cursor = ();
+            do {
+                my $followers = $bsky->graph_getFollowers( $handle // $config->{session}{handle}, 100, $cursor );
+                push @followers, @{ $followers->{followers} };
+                $cursor = $followers->{cursor};
+            } while ($cursor);
+            if ($json) {
+                $self->say( JSON::Tiny::to_json $_->_raw ) for @followers;
+            }
+            else {
+                for my $follower (@followers) {
+                    $self->say(
+                        sprintf '%s%s%s%s %s%s%s',
+                        color('red'),   $follower->handle->_raw,
+                        color('reset'), defined $follower->displayName ? ' [' . $follower->displayName . ']' : '',
+                        color('blue'),  $follower->did->_raw, color('reset')
+                    );
+                }
+            }
+            return scalar @followers;
         }
 
         method cmd_block ($handle) {

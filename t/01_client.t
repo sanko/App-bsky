@@ -74,13 +74,23 @@ like is_say { new_client->run(qw[show-profile --json]) },                      q
 like is_say { new_client->run(qw[show-profile --handle sankor.bsky.social]) }, qr[sankor.bsky.social], 'show-profile --handle sankor.bsky.social';
 like is_say { new_client->run(qw[show-profile --json --handle sankor.bsky.social]) }, qr["sankor], 'show-profile --json --handle sankor.bsky.social';
 like is_say { new_client->run(qw[show-profile --json -H sankor.bsky.social]) },       qr["sankor], 'show-profile --json -H sankor.bsky.social';
-like is_say { new_client->run(qw[follows]) },                                         qr[atproto.com], 'follows';
-like is_say { new_client->run(qw[follows --json]) },                                  qr[^{],          'follows --json';
-like is_say { new_client->run(qw[follows --handle sankor.bsky.social]) },             qr[atproto.com], 'follows --handle sankor.bsky.social';
-like is_say { new_client->run(qw[follows --json --handle sankor.bsky.social]) },      qr["bsky.app"],  'follows --json --handle sankor.bsky.social';
-like is_say { new_client->run(qw[follows --json -H sankor.bsky.social]) },            qr["bsky.app"],  'follows --json -H sankor.bsky.social';
-like is_say { new_client->run(qw[show-session]) },                                    qr[did:plc:pwqewimhd3rxc4hg6ztwrcyj], 'show-session';
-like is_say { new_client->run(qw[show-session --json]) },                             qr[^{],                               'show-session --json';
+subtest 'follows' => sub {
+    like is_say { new_client->run(qw[follows]) },                                    qr[atproto.com], 'follows';
+    like is_say { new_client->run(qw[follows --json]) },                             qr[^{],          'follows --json';
+    like is_say { new_client->run(qw[follows --handle sankor.bsky.social]) },        qr[atproto.com], 'follows --handle sankor.bsky.social';
+    like is_say { new_client->run(qw[follows --json --handle sankor.bsky.social]) }, qr["bsky.app"],  'follows --json --handle sankor.bsky.social';
+    like is_say { new_client->run(qw[follows --json -H sankor.bsky.social]) },       qr["bsky.app"],  'follows --json -H sankor.bsky.social';
+};
+subtest 'followers' => sub {    # These tests might fail! I cannot control who follows the test account
+    my $todo = todo 'I cannot control who follows the test account';
+    like is_say { new_client->run(qw[followers]) },                                    qr[deal.bsky.social], 'followers';
+    like is_say { new_client->run(qw[followers --json]) },                             qr[^{],               'followers --json';
+    like is_say { new_client->run(qw[followers --handle sankor.bsky.social]) },        qr[atproto.com],      'followers --handle sankor.bsky.social';
+    like is_say { new_client->run(qw[followers --json --handle sankor.bsky.social]) }, qr["bsky.app"], 'followers --json --handle sankor.bsky.social';
+    like is_say { new_client->run(qw[followers --json -H sankor.bsky.social]) },       qr["bsky.app"], 'followers --json -H sankor.bsky.social';
+};
+like is_say { new_client->run(qw[show-session]) },        qr[did:plc:pwqewimhd3rxc4hg6ztwrcyj], 'show-session';
+like is_say { new_client->run(qw[show-session --json]) }, qr[^{],                               'show-session --json';
 #
 done_testing;
 __END__

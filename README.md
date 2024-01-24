@@ -210,8 +210,12 @@ Show follows.
 
 ## followers
 
-```perl
-bsky followers [user]
+```
+bsky followers
+
+bsky followers --handle sankor.bsky.social
+
+bsky followers --json
 ```
 
 Show followers.
@@ -219,7 +223,9 @@ Show followers.
 ### Options
 
 ```perl
-user        optional, defaults to the current logged in account
+--handle handle     user handle; defaults to the logged in account
+-H handle           alternative to --handle
+--json              boolean flag; content is printed as JSON objects if given
 ```
 
 ## delete

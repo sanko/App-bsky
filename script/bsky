@@ -172,13 +172,19 @@ Show follows.
 
 =head2 followers
 
-    bsky followers [user]
+    bsky followers
+
+    bsky followers --handle sankor.bsky.social
+
+    bsky followers --json
 
 Show followers.
 
 =head3 Options
 
-    user        optional, defaults to the current logged in account
+    --handle handle     user handle; defaults to the logged in account
+    -H handle           alternative to --handle
+    --json              boolean flag; content is printed as JSON objects if given
 
 =head2 delete
 
