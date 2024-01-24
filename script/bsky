@@ -68,6 +68,18 @@ Show profile.
 
 update profile
 
+=head2 show-session
+
+    bsky show-session
+
+    bsky show-session --json
+
+Show current session.
+
+=head3 Options
+
+    --json              boolean flag; content is printed as JSON objects if given
+
 =head2 timeline
 
     bsky timeline

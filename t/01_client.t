@@ -79,7 +79,9 @@ like is_say { new_client->run(qw[follows --json]) },                            
 like is_say { new_client->run(qw[follows --handle sankor.bsky.social]) },             qr[atproto.com], 'follows --handle sankor.bsky.social';
 like is_say { new_client->run(qw[follows --json --handle sankor.bsky.social]) },      qr["bsky.app"],  'follows --json --handle sankor.bsky.social';
 like is_say { new_client->run(qw[follows --json -H sankor.bsky.social]) },            qr["bsky.app"],  'follows --json -H sankor.bsky.social';
-##
+like is_say { new_client->run(qw[show-session]) },                                    qr[did:plc:pwqewimhd3rxc4hg6ztwrcyj], 'show-session';
+like is_say { new_client->run(qw[show-session --json]) },                             qr[^{],                               'show-session --json';
+#
 done_testing;
 __END__
 =pod

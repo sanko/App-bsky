@@ -74,6 +74,22 @@ Show profile.
 
 update profile
 
+## show-session
+
+```
+bsky show-session
+
+bsky show-session --json
+```
+
+Show current session.
+
+### Options
+
+```
+--json              boolean flag; content is printed as JSON objects if given
+```
+
 ## timeline
 
 ```

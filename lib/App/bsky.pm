@@ -144,7 +144,27 @@ package App::bsky 0.01 {
         method cmd_updateprofile() {
             ...;
         }
-        method cmd_showsession() { }
+
+        method cmd_showsession (@args) {
+            GetOptionsFromArray( \@args, 'json!' => \my $json );
+            if ($json) {
+                $self->say(
+                    JSON::Tiny::to_json(
+                        {   did            => $config->{session}{did},
+                            email          => $config->{session}{email},
+                            emailConfirmed => $config->{session}{emailConfirmed},
+                            handle         => $config->{session}{handle}
+                        }
+                    )
+                );
+            }
+            else {
+                $self->say( 'DID: ' . $config->{session}{did} );
+                $self->say( 'Email: ' . $config->{session}{email} );
+                $self->say( 'Handle: ' . $config->{session}{handle} );
+            }
+            return 1;
+        }
 
         method cmd_timeline (@args) {
             GetOptionsFromArray( \@args, 'json!' => \my $json );
