@@ -248,12 +248,21 @@ package App::bsky 0.01 {
             ...;
         }
 
-        method cmd_follow ($handle) {
-            ...;
+        method cmd_follow ($actor) {    # takes handle or did
+            my $profile = $bsky->actor_getProfile($actor);
+            builtin::blessed $profile or return $self->err( $profile->{message} );
+            my $res = $bsky->repo_createRecord( $config->{session}{did},
+                'app.bsky.graph.follow', At::Lexicon::app::bsky::graph::follow->new( createdAt => time, subject => $profile->did ) );
+            $self->say( $res->{uri}->as_string );
         }
 
-        method cmd_unfollow ($handle) {
-            ...;
+        method cmd_unfollow ($actor) {    # takes handle or did
+            my $profile = $bsky->actor_getProfile($actor);
+            builtin::blessed $profile or return $self->err( $profile->{message} );
+            return 0 unless $profile->viewer->following;
+            my ($rkey) = $profile->viewer->following =~ m[app.bsky.graph.follow/(.*)$];
+            my $res = $bsky->repo_deleteRecord( $config->{session}{did}, 'app.bsky.graph.follow', $rkey );
+            $self->say( $profile->viewer->following );
         }
 
         method cmd_follows (@args) {

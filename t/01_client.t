@@ -89,6 +89,16 @@ subtest 'followers' => sub {    # These tests might fail! I cannot control who f
     like is_say { new_client->run(qw[followers --json --handle sankor.bsky.social]) }, qr["bsky.app"], 'followers --json --handle sankor.bsky.social';
     like is_say { new_client->run(qw[followers --json -H sankor.bsky.social]) },       qr["bsky.app"], 'followers --json -H sankor.bsky.social';
 };
+subtest 'follow/unfollow' => sub {
+    like is_say { new_client->run(qw[follow sankor.bsky.social]) }, qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.graph.follow],
+        'follow sankor.bsky.social';
+    like is_say { new_client->run(qw[unfollow sankor.bsky.social]) }, qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.graph.follow],
+        'unfollow sankor.bsky.social';
+    like is_say { new_client->run(qw[follow did:plc:2lk3pbakx2erxgotvzyeuyem]) }, qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.graph.follow],
+        'follow did:plc:2lk3pbakx2erxgotvzyeuyem';
+    like is_say { new_client->run(qw[unfollow did:plc:2lk3pbakx2erxgotvzyeuyem]) }, qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.graph.follow],
+        'unfollow did:plc:2lk3pbakx2erxgotvzyeuyem';
+};
 like is_say { new_client->run(qw[show-session]) },        qr[did:plc:pwqewimhd3rxc4hg6ztwrcyj], 'show-session';
 like is_say { new_client->run(qw[show-session --json]) }, qr[^{],                               'show-session --json';
 #

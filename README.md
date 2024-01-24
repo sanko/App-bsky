@@ -178,14 +178,36 @@ uri
 
 ```
 bsky follow [handle]
+
+bsky follow sankor.bsky.social
+
+bsky follow did:plc:2lk3pbakx2erxgotvzyeuyem
 ```
 
 Follow the handle
 
 ### Options
 
+```perl
+handle          user handle or DID
 ```
-handle
+
+## unfollow
+
+```
+bsky unfollow [handle]
+
+bsky unfollow sankor.bsky.social
+
+bsky unfollow did:plc:2lk3pbakx2erxgotvzyeuyem
+```
+
+Unfollow the handle
+
+### Options
+
+```perl
+handle          user handle or DID
 ```
 
 ## follows

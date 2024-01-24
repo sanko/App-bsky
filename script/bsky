@@ -148,11 +148,29 @@ Show reposts of the post
 
     bsky follow [handle]
 
+    bsky follow sankor.bsky.social
+
+    bsky follow did:plc:2lk3pbakx2erxgotvzyeuyem
+
 Follow the handle
 
 =head3 Options
 
-    handle
+    handle          user handle or DID
+
+=head2 unfollow
+
+    bsky unfollow [handle]
+
+    bsky unfollow sankor.bsky.social
+
+    bsky unfollow did:plc:2lk3pbakx2erxgotvzyeuyem
+
+Unfollow the handle
+
+=head3 Options
+
+    handle          user handle or DID
 
 =head2 follows
 
