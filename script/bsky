@@ -50,7 +50,19 @@ View or change configuration values. See L<Configuration|/Configuration> for a l
 
 =head2 show-profile
 
-show profile
+    bsky show-profile
+
+    bsky show-profile --handle sankor.bsky.social
+
+    bsky show-profile --json
+
+Show profile.
+
+=head3 Options
+
+    --handle handle     user handle; defaults to the logged in account
+    -H handle           alternative to --handle
+    --json              boolean flag; content is printed as JSON objects if given
 
 =head2 update-profile
 

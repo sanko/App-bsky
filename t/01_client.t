@@ -68,7 +68,12 @@ ok new_client->run(qw[login atperl.bsky.social ck2f-bqxl-h54l-xm3l]),           
 ok new_client->run(qw[login atperl.bsky.social ck2f-bqxl-h54l-xm3l --host https://bsky.social]), 'login ... ... --host ...';
 note 'the following are using the automatic resume data';
 ok new_client->run(qw[tl]), 'timeline';
-like is_say { new_client->run(qw[tl --json]) }, qr[^{], 'timeline --json';
+like is_say { new_client->run(qw[tl --json]) },                                qr[^{],                 'timeline --json';
+like is_say { new_client->run(qw[show-profile]) },                             qr[atperl.bsky.social], 'show-profile';
+like is_say { new_client->run(qw[show-profile --json]) },                      qr[^{],                 'show-profile --json';
+like is_say { new_client->run(qw[show-profile --handle sankor.bsky.social]) }, qr[sankor.bsky.social], 'show-profile --handle sankor.bsky.social';
+like is_say { new_client->run(qw[show-profile --json --handle sankor.bsky.social]) }, qr["sankor], 'show-profile --json --handle sankor.bsky.social';
+like is_say { new_client->run(qw[show-profile --json -H sankor.bsky.social]) },       qr["sankor], 'show-profile --json -H sankor.bsky.social';
 #
 done_testing;
 __END__

@@ -33,12 +33,24 @@ package App::bsky 0.01 {
                     decode_json decode_base64 $payload;
                 }
                 my $access = _decode_token $config->{session}{accessJwt};
-                if ( $access->{exp} < time ) {
+
+                #~ use Data::Dump;
+                #~ ddx $access;
+                #~ warn time;
+                #~ warn $access->{exp} - time;
+                if ( time > $access->{exp} ) {
+
+                    #~ warn;
                     $config->{session}{accessJwt} = $config->{session}{refreshJwt};
                     $bsky                         = At::Bluesky->resume( %{ $config->{session} } );
                     $config->{session}            = $bsky->server_refreshSession( $config->{session}{refreshJwt} );
                     $config->{session}{did}       = $config->{session}{did}->_raw;
+                    $config->{session}{handle}    = $config->{session}{handle}->_raw;
                     my $refresh = _decode_token $config->{session}{refreshJwt};
+
+                    #~ ddx $refresh;
+                    #~ warn time;
+                    #~ warn time - $refresh->{exp};
                     if ( $refresh->{exp} > time ) {
                         $bsky->resume( %{ $bsky->server_refreshSession( $config->{session}{refreshJwt} ) } );
                     }
@@ -47,10 +59,15 @@ package App::bsky 0.01 {
                     }
                 }
                 else {
+                    #~ warn;
+                    #~ use Data::Dump;
+                    #~ ddx $config;
+                    #~ ddx $config->{session};
                     $bsky = At::Bluesky->resume( %{ $config->{session} } );
                 }
             }
             else {
+                #~ warn;
                 $bsky = At::Bluesky->new();
             }
         }
@@ -105,8 +122,23 @@ package App::bsky 0.01 {
             $self->err( 'Unknown subcommand found: ' . $cmd . '. Try bsky --help', 1 ) unless @args;
         }
 
-        method cmd_showprofile() {
-            ...;
+        method cmd_showprofile (@args) {
+            GetOptionsFromArray( \@args, 'json!' => \my $json, 'handle|H=s' => \my $handle );
+            my $profile = $bsky->actor_getProfile( $handle // $config->{session}{handle} );
+            if ($json) {
+                $self->say( JSON::Tiny::to_json( $profile->_raw ) );
+            }
+            else {
+                $self->say( 'DID: %s',         $profile->did->_raw );
+                $self->say( 'Handle: %s',      $profile->handle->_raw );
+                $self->say( 'DisplayName: %s', $profile->displayName // '' );
+                $self->say( 'Description: %s', $profile->description // '' );
+                $self->say( 'Follows: %d',     $profile->followsCount );
+                $self->say( 'Followers: %d',   $profile->followersCount );
+                $self->say( 'Avatar: %s',      $profile->avatar // '' );
+                $self->say( 'Banner: %s',      $profile->banner // '' );
+            }
+            1;
         }
 
         method cmd_updateprofile() {
@@ -128,6 +160,8 @@ package App::bsky 0.01 {
 
                 sub _dump_post ( $self, $depth, $post ) {
 
+                    #~ use Data::Dump;
+                    #~ ddx $post->_raw;
                     # TODO: Support image embeds as raw links
                     $self->say(
                         '%s%s%s%s%s (%s)',
@@ -226,7 +260,7 @@ package App::bsky 0.01 {
             GetOptionsFromArray( \@args, 'host=s' => \my $host );
             $bsky = At::Bluesky->new( identifier => $ident, password => $password, defined $host ? ( _host => $host ) : () );
             return $self->err( '', 1 ) unless $bsky->session;
-            $config->{session} = $bsky->session;
+            $config->{session} = $bsky->session;    # Already raw
             $self->say( $config ?
                     'Logged in' .
                     ( $host ? ' at ' . $host : '' ) . ' as ' .

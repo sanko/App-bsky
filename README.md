@@ -52,7 +52,23 @@ value       optional
 
 ## show-profile
 
-show profile
+```
+bsky show-profile
+
+bsky show-profile --handle sankor.bsky.social
+
+bsky show-profile --json
+```
+
+Show profile.
+
+### Options
+
+```perl
+--handle handle     user handle; defaults to the logged in account
+-H handle           alternative to --handle
+--json              boolean flag; content is printed as JSON objects if given
+```
 
 ## update-profile
 
