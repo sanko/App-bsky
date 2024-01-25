@@ -1,7 +1,7 @@
 package App::bsky 0.01 {
     use v5.38;
     use utf8;
-    use At::Bluesky;
+    use Bluesky;
     use experimental 'class';
     no warnings 'experimental';
     use open qw[:std :encoding(UTF-8)];
@@ -33,7 +33,7 @@ package App::bsky 0.01 {
                 my $access  = _decode_token $config->{session}{accessJwt};
                 my $refresh = _decode_token $config->{session}{refreshJwt};
                 if ( $refresh->{exp} > time ) {
-                    $bsky = At::Bluesky->resume( %{ $config->{session} } );
+                    $bsky = Bluesky->resume( %{ $config->{session} } );
                     $config->{session} = $bsky->session;
                 }
                 else {
@@ -41,7 +41,7 @@ package App::bsky 0.01 {
                 }
             }
             else {
-                $bsky = At::Bluesky->new();
+                $bsky = Bluesky->new();
             }
         }
 
@@ -274,12 +274,13 @@ package App::bsky 0.01 {
             ...;
         }
 
-        method cmd_post () {
-            ...;
+        method cmd_post ($text) {
+            my $res = $bsky->post( text => $text );
+            defined $res->{uri} ? $self->say( $res->{uri} ) : 0;
         }
 
-        method cmd_delete ($cid) {
-            ...;
+        method cmd_delete ($rkey) {
+            $bsky->delete($rkey);
         }
 
         method cmd_vote ( $uri, $bool //= !!1 ) {
@@ -370,23 +371,13 @@ package App::bsky 0.01 {
         }
 
         method cmd_block ($actor) {    # takes handle or did
-            my $profile = $bsky->actor_getProfile($actor);
-            builtin::blessed $profile or return $self->err( $profile->{message} );
-            my $res = $bsky->repo_createRecord(
-                repo       => $config->{session}{did},
-                collection => 'app.bsky.graph.block',
-                record     => At::Lexicon::app::bsky::graph::block->new( createdAt => time, subject => $profile->did )
-            );
-            $self->say( $res->{uri}->as_string );
+            my $res = $bsky->block($actor);
+            builtin::blessed $res ? $self->say( $res->viewer->blocking ) : 0;
         }
 
         method cmd_unblock ($actor) {    # takes handle or did
-            my $profile = $bsky->actor_getProfile($actor);
-            builtin::blessed $profile or return $self->err( $profile->{message} );
-            return 0 unless $profile->viewer->blocking;
-            my ($rkey) = $profile->viewer->blocking =~ m[app.bsky.graph.block/(.*)$];
-            my $res = $bsky->repo_deleteRecord( repo => $config->{session}{did}, collection => 'app.bsky.graph.block', rkey => $rkey );
-            $self->say( $profile->viewer->blocking );
+            my $res = $bsky->unblock($actor);
+            defined $res ? $self->say( $res->viewer->blocking ) : 0;
         }
 
         method cmd_blocks (@args) {
@@ -415,7 +406,7 @@ package App::bsky 0.01 {
 
         method cmd_login ( $ident, $password, @args ) {
             GetOptionsFromArray( \@args, 'host=s' => \my $host );
-            $bsky = At::Bluesky->new( identifier => $ident, password => $password, defined $host ? ( _host => $host ) : () );
+            $bsky = Bluesky->new( identifier => $ident, password => $password, defined $host ? ( _host => $host ) : () );
             return $self->err( '', 1 ) unless $bsky->session;
             $config->{session} = $bsky->session;    # Already raw
             $self->say( $config ?

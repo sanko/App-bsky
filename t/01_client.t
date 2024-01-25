@@ -90,28 +90,46 @@ subtest 'followers' => sub {    # These tests might fail! I cannot control who f
     like is_say { new_client->run(qw[followers --json -H sankor.bsky.social]) },       qr["bsky.app"], 'followers --json -H sankor.bsky.social';
 };
 subtest 'follow/unfollow' => sub {
+    skip_all 'sankor.bsky.social is already followed; might be a race condition with another smoker'
+        if is_say { new_client->run(qw[follows]) } =~ qr[sankor.bsky.social];
+    skip_all 'sankor.bsky.social is blocked and cannot be followed; might be a race condition with another smoker'
+        if is_say { new_client->run(qw[blocks]) } =~ qr[sankor.bsky.social];
     like is_say { new_client->run(qw[follow sankor.bsky.social]) }, qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.graph.follow],
         'follow sankor.bsky.social';
+    like is_say { new_client->run(qw[follows]) }, qr[sankor.bsky.social], 'follows';
     sleep 1;    # sometimes the service has to catch up
     like is_say { new_client->run(qw[unfollow sankor.bsky.social]) }, qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.graph.follow],
         'unfollow sankor.bsky.social';
+    unlike is_say { new_client->run(qw[follows]) }, qr[sankor.bsky.social], 'follows';
     sleep 1;    # sometimes the service has to catch up
     like is_say { new_client->run(qw[follow did:plc:2lk3pbakx2erxgotvzyeuyem]) }, qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.graph.follow],
         'follow did:plc:2lk3pbakx2erxgotvzyeuyem';
+    like is_say { new_client->run(qw[follows]) }, qr[sankor.bsky.social], 'follows';
     sleep 1;    # sometimes the service has to catch up
     like is_say { new_client->run(qw[unfollow did:plc:2lk3pbakx2erxgotvzyeuyem]) }, qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.graph.follow],
         'unfollow did:plc:2lk3pbakx2erxgotvzyeuyem';
 };
-like is_say {
-    new_client->run(qw[update-profile --avatar https://cataas.com/cat?width=100 --banner https://cataas.com/cat?width=1000])
-}, qr[did:plc:pwqewimhd3rxc4hg6ztwrcyj], 'update-profile --avatar ... --banner ...';
+todo 'using random images pulled from the web... things may go wrong' => sub {
+    like is_say {
+        new_client->run(qw[update-profile --avatar https://cataas.com/cat?width=100 --banner https://cataas.com/cat?width=1000])
+    }, qr[did:plc:pwqewimhd3rxc4hg6ztwrcyj], 'update-profile --avatar ... --banner ...';
+};
 subtest 'block/unblock' => sub {
+    skip_all 'sankor.bsky.social is already blocked; might be a race condition with another smoker'
+        if is_say { new_client->run(qw[blocks]) } =~ qr[sankor.bsky.social];
+
+    #~ skip_all 'testing!';
     like is_say { new_client->run(qw[block sankor.bsky.social]) }, qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.graph.block],
         'block sankor.bsky.social';
     sleep 1;    # sometimes the service has to catch up
     like is_say { new_client->run(qw[blocks]) }, qr[sankor.bsky.social], 'blocks';
     like is_say { new_client->run(qw[unblock sankor.bsky.social]) }, qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.graph.block],
         'unblock sankor.bsky.social';
+};
+subtest 'post/delete' => sub {
+    like my $uri = is_say { new_client->run(qw[post Demo]) }, qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.feed.post], 'post Demo';
+    sleep 1;    # sometimes the service has to catch up
+    ok new_client->run( 'delete', $uri ), 'delete at://...';
 };
 like is_say { new_client->run(qw[notifications]) },        qr[did:plc:pwqewimhd3rxc4hg6ztwrcyj], 'notifications';
 like is_say { new_client->run(qw[notifications --json]) }, qr[^{],                               'notifications --json';
