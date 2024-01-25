@@ -64,8 +64,8 @@ subtest 'login ... ... (error)' => sub {
     }, qr[Error creating session], 'warns on bad auth info';
     ok !$client, 'client is undef';
 };
-ok new_client->run(qw[login atperl.bsky.social ck2f-bqxl-h54l-xm3l]),                            'login ... ...';
-ok new_client->run(qw[login atperl.bsky.social ck2f-bqxl-h54l-xm3l --host https://bsky.social]), 'login ... ... --host ...';
+ok new_client->run(qw[login atperl.bsky.social qbhd-opac-arvg-j7ol]),                            'login ... ...';
+ok new_client->run(qw[login atperl.bsky.social qbhd-opac-arvg-j7ol --host https://bsky.social]), 'login ... ... --host ...';
 note 'the following are using the automatic resume data';
 ok new_client->run(qw[tl]), 'timeline';
 like is_say { new_client->run(qw[tl --json]) },                                qr[^{],                 'timeline --json';
@@ -104,8 +104,7 @@ subtest 'follow/unfollow' => sub {
 };
 like is_say {
     new_client->run(
-        qw[update-profile --avatar https://cataas.com/cat?width=100 --banner https://cataas.com/cat?width=1000
-        ]
+        qw[update-profile --avatar https://cataas.com/cat?width=100 --banner https://cataas.com/cat?width=1000]
     )
 }, qr[did:plc:pwqewimhd3rxc4hg6ztwrcyj], 'update-profile --avatar ... --banner ...';
 like is_say { new_client->run(qw[notifications]) },        qr[did:plc:pwqewimhd3rxc4hg6ztwrcyj], 'notifications';
