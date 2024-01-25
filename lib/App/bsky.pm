@@ -35,6 +35,7 @@ package App::bsky 0.01 {
                 if ( $refresh->{exp} > time ) {
                     $bsky = Bluesky->resume( %{ $config->{session} } );
                     $config->{session} = $bsky->session;
+                    $self->put_config;
                 }
                 else {
                     $self->err('Please log in');
@@ -53,7 +54,8 @@ package App::bsky 0.01 {
 
         method DESTROY ( $global //= 0 ) {
             return unless $config;
-            $self->put_config;
+
+            #~ $self->put_config;
         }
         #
         method get_config() {
@@ -409,6 +411,7 @@ package App::bsky 0.01 {
             $bsky = Bluesky->new( identifier => $ident, password => $password, defined $host ? ( _host => $host ) : () );
             return $self->err( '', 1 ) unless $bsky->session;
             $config->{session} = $bsky->session;    # Already raw
+            $self->put_config;
             $self->say( $config ?
                     'Logged in' .
                     ( $host ? ' at ' . $host : '' ) . ' as ' .
@@ -486,6 +489,7 @@ package App::bsky 0.01 {
             elsif ( defined $field && defined $config->{settings}{$field} ) {
                 if ( defined $value ) {
                     $config->{settings}{$field} = $value;
+                    $self->put_config;
                     $self->say( 'Config value %s set to %s', $field, $value );
                 }
                 else {
