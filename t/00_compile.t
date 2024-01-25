@@ -3,7 +3,8 @@ use Test2::V0;
 use lib '../lib';
 use App::bsky;
 #
-isa_ok my $cli = App::bsky::CLI->new( config_file => Path::Tiny->tempfile('.bsky.XXXXX') ), ['App::bsky::CLI'];
+my $temp = Path::Tiny->tempfile('.bsky.XXXXX');
+isa_ok my $cli = App::bsky::CLI->new( config_file => $temp ), ['App::bsky::CLI'];
 subtest 'commands' => sub {
     can_ok $cli, $_ for sort qw[
         cmd_showprofile cmd_updateprofile
@@ -26,7 +27,6 @@ subtest 'commands' => sub {
     ];
 };
 subtest 'internals' => sub {
-    my $cli = App::bsky::CLI->new;
     can_ok $cli, $_ for sort qw[err say run config get_config put_config DESTROY];
 };
 #

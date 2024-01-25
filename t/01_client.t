@@ -102,8 +102,16 @@ subtest 'follow/unfollow' => sub {
     like is_say { new_client->run(qw[unfollow did:plc:2lk3pbakx2erxgotvzyeuyem]) }, qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.graph.follow],
         'unfollow did:plc:2lk3pbakx2erxgotvzyeuyem';
 };
-like is_say { new_client->run(qw[show-session]) },        qr[did:plc:pwqewimhd3rxc4hg6ztwrcyj], 'show-session';
-like is_say { new_client->run(qw[show-session --json]) }, qr[^{],                               'show-session --json';
+like is_say {
+    new_client->run(
+        qw[update-profile --avatar https://cataas.com/cat?width=100 --banner https://cataas.com/cat?width=1000
+        ]
+    )
+}, qr[did:plc:pwqewimhd3rxc4hg6ztwrcyj], 'update-profile --avatar ... --banner ...';
+like is_say { new_client->run(qw[notifications]) },        qr[did:plc:pwqewimhd3rxc4hg6ztwrcyj], 'notifications';
+like is_say { new_client->run(qw[notifications --json]) }, qr[^{],                               'notifications --json';
+like is_say { new_client->run(qw[show-session]) },         qr[did:plc:pwqewimhd3rxc4hg6ztwrcyj], 'show-session';
+like is_say { new_client->run(qw[show-session --json]) },  qr[^{],                               'show-session --json';
 #
 done_testing;
 __END__

@@ -24,50 +24,23 @@ package App::bsky 0.01 {
             $self->config;
             if ( defined $config->{session}{accessJwt} ) {    # Check if the tokens are expired...
 
-                #~ use Data::Dump;
-                #~ ddx $config;
                 sub _decode_token ($token) {
                     use MIME::Base64 qw[decode_base64];
                     my ( $header, $payload, $sig ) = split /\./, $token;
                     $payload =~ tr[-_][+/];    # Replace Base64-URL characters with standard Base64
                     decode_json decode_base64 $payload;
                 }
-                my $access = _decode_token $config->{session}{accessJwt};
-
-                #~ use Data::Dump;
-                #~ ddx $access;
-                #~ warn time;
-                #~ warn $access->{exp} - time;
-                if ( time > $access->{exp} ) {
-
-                    #~ warn;
-                    $config->{session}{accessJwt} = $config->{session}{refreshJwt};
-                    $bsky                         = At::Bluesky->resume( %{ $config->{session} } );
-                    $config->{session}            = $bsky->server_refreshSession( $config->{session}{refreshJwt} );
-                    $config->{session}{did}       = $config->{session}{did}->_raw;
-                    $config->{session}{handle}    = $config->{session}{handle}->_raw;
-                    my $refresh = _decode_token $config->{session}{refreshJwt};
-
-                    #~ ddx $refresh;
-                    #~ warn time;
-                    #~ warn time - $refresh->{exp};
-                    if ( $refresh->{exp} > time ) {
-                        $bsky->resume( %{ $bsky->server_refreshSession( $config->{session}{refreshJwt} ) } );
-                    }
-                    else {
-                        $self->err('Please log in');
-                    }
+                my $access  = _decode_token $config->{session}{accessJwt};
+                my $refresh = _decode_token $config->{session}{refreshJwt};
+                if ( $refresh->{exp} > time ) {
+                    $bsky = At::Bluesky->resume( %{ $config->{session} } );
+                    $config->{session} = $bsky->session;
                 }
                 else {
-                    #~ warn;
-                    #~ use Data::Dump;
-                    #~ ddx $config;
-                    #~ ddx $config->{session};
-                    $bsky = At::Bluesky->resume( %{ $config->{session} } );
+                    $self->err('Please log in');
                 }
             }
             else {
-                #~ warn;
                 $bsky = At::Bluesky->new();
             }
         }
@@ -141,27 +114,104 @@ package App::bsky 0.01 {
             1;
         }
 
-        method cmd_updateprofile() {
-            ...;
+        method cmd_updateprofile (@args) {
+            GetOptionsFromArray(
+                \@args,
+                'avatar=s'      => \my $avatar,
+                'banner=s'      => \my $banner,
+                'name=s'        => \my $displayName,
+                'description=s' => \my $description
+            );
+            $avatar // $banner // $displayName // $description // return $self->cmd_help('updateprofile');
+            my $profile = $bsky->actor_getProfile( $config->{session}{handle} );
+            if ($profile) {    # Bluesky clears them if we do not set them every time
+                $displayName //= $profile->displayName;
+                $description //= $profile->description;
+            }
+            if ( defined $avatar ) {
+                if ( $avatar =~ m[^https?://] ) {
+                    my $res = $bsky->http->get($avatar);
+                    use Carp;
+                    $res->{content} // confess 'failed to download avatar from ' . $avatar;
+
+                    # TODO: check content type HTTP::Tiny and Mojo::UserAgent do this differently
+                    $avatar = $bsky->repo_uploadBlob( $res->{content}, $res->{headers}{'content-type'} );
+                }
+                elsif ( -e $avatar ) {
+                    use Path::Tiny;
+                    $avatar = path($avatar)->slurp_raw;
+                    my $type = substr( $avatar, 0, 2 ) eq pack 'H*',
+                        'ffd8' ? 'image/jpeg' : substr( $avatar, 1, 3 ) eq 'PNG' ? 'image/png' : 'image/jpeg';    # XXX: Assume it's a jpeg?
+                    $avatar = $bsky->repo_uploadBlob( $avatar, $type );
+                }
+                else {
+                    $self->err('unsure what to do with this avatar; does not seem to be a URL or local file');
+                }
+                if ($avatar) {
+                    $self->say( 'uploaded avatar... %d bytes', $avatar->{blob}{size} );
+                }
+                else {
+                    $self->say('failed to upload avatar');
+                }
+            }
+            if ( defined $banner ) {
+                if ( $banner =~ m[^https?://] ) {
+                    my $res = $bsky->http->get($banner);
+                    use Carp;
+                    $res->{content} // confess 'failed to download banner from ' . $banner;
+
+                    # TODO: check content type HTTP::Tiny and Mojo::UserAgent do this differently
+                    $banner = $bsky->repo_uploadBlob( $res->{content}, $res->{headers}{'content-type'} );
+                }
+                elsif ( -e $banner ) {
+                    use Path::Tiny;
+                    $banner = path($banner)->slurp_raw;
+                    my $type = substr( $banner, 0, 2 ) eq pack 'H*',
+                        'ffd8' ? 'image/jpeg' : substr( $banner, 1, 3 ) eq 'PNG' ? 'image/png' : 'image/jpeg';    # XXX: Assume it's a jpeg?
+                    $banner = $bsky->repo_uploadBlob( $banner, $type );
+                }
+                else {
+                    $self->err('unsure what to do with this banner; does not seem to be a URL or local file');
+                }
+                if ($banner) {
+                    $self->say( 'uploaded banner... %d bytes', $banner->{blob}{size} );
+                }
+                else {
+                    $self->say('failed to upload banner');
+                }
+            }
+            my $res = $bsky->repo_putRecord(
+                repo       => $config->{session}{did},
+                collection => 'app.bsky.actor.profile',
+                record     => At::Lexicon::app::bsky::actor::profile->new(
+                    defined $displayName ? ( displayName => $displayName )    : (),
+                    defined $description ? ( description => $description )    : (),
+                    defined $avatar      ? ( avatar      => $avatar->{blob} ) : (),
+                    defined $banner      ? ( banner      => $banner->{blob} ) : ()
+                ),
+                rkey => 'self'
+            );
+            defined $res->{uri} ? $self->say( $res->{uri}->as_string ) : $self->err( $res->{message} );
         }
 
         method cmd_showsession (@args) {
             GetOptionsFromArray( \@args, 'json!' => \my $json );
+            my $session = $bsky->server_getSession;
             if ($json) {
                 $self->say(
                     JSON::Tiny::to_json(
-                        {   did            => $config->{session}{did},
-                            email          => $config->{session}{email},
-                            emailConfirmed => $config->{session}{emailConfirmed},
-                            handle         => $config->{session}{handle}
+                        {   did            => $session->{did}->_raw,
+                            email          => $session->{email},
+                            emailConfirmed => \!!$session->{emailConfirmed},
+                            handle         => $session->{handle}->_raw
                         }
                     )
                 );
             }
             else {
-                $self->say( 'DID: ' . $config->{session}{did} );
-                $self->say( 'Email: ' . $config->{session}{email} );
-                $self->say( 'Handle: ' . $config->{session}{handle} );
+                $self->say( 'DID: ' . $session->{did}->_raw );
+                $self->say( 'Email: ' . $session->{email} );
+                $self->say( 'Handle: ' . $session->{handle}->_raw );
             }
             return 1;
         }
@@ -251,8 +301,11 @@ package App::bsky 0.01 {
         method cmd_follow ($actor) {    # takes handle or did
             my $profile = $bsky->actor_getProfile($actor);
             builtin::blessed $profile or return $self->err( $profile->{message} );
-            my $res = $bsky->repo_createRecord( $config->{session}{did},
-                'app.bsky.graph.follow', At::Lexicon::app::bsky::graph::follow->new( createdAt => time, subject => $profile->did ) );
+            my $res = $bsky->repo_createRecord(
+                repo       => $config->{session}{did},
+                collection => 'app.bsky.graph.follow',
+                record     => At::Lexicon::app::bsky::graph::follow->new( createdAt => time, subject => $profile->did )
+            );
             $self->say( $res->{uri}->as_string );
         }
 
@@ -261,7 +314,7 @@ package App::bsky 0.01 {
             builtin::blessed $profile or return $self->err( $profile->{message} );
             return 0 unless $profile->viewer->following;
             my ($rkey) = $profile->viewer->following =~ m[app.bsky.graph.follow/(.*)$];
-            my $res = $bsky->repo_deleteRecord( $config->{session}{did}, 'app.bsky.graph.follow', $rkey );
+            my $res = $bsky->repo_deleteRecord( repo => $config->{session}{did}, collection => 'app.bsky.graph.follow', rkey => $rkey );
             $self->say( $profile->viewer->following );
         }
 
@@ -295,8 +348,10 @@ package App::bsky 0.01 {
             my $cursor = ();
             do {
                 my $followers = $bsky->graph_getFollowers( $handle // $config->{session}{handle}, 100, $cursor );
-                push @followers, @{ $followers->{followers} };
-                $cursor = $followers->{cursor};
+                if ( defined $followers->{followers} ) {
+                    push @followers, @{ $followers->{followers} };
+                    $cursor = $followers->{cursor};
+                }
             } while ($cursor);
             if ($json) {
                 $self->say( JSON::Tiny::to_json $_->_raw ) for @followers;
@@ -341,12 +396,45 @@ package App::bsky 0.01 {
                     'Failed to log in as ' . $ident );
         }
 
-        method cmd_notifications ($handle) {
-            ...;
+        method cmd_notifications (@args) {
+            GetOptionsFromArray( \@args, 'all|a' => \my $all, 'json' => \my $json );
+            my @notes;
+            my $cursor = ();
+            do {
+                my $notes = $bsky->notification_listNotifications( undef, 100, $cursor );
+                if ( defined $notes->{notifications} ) {
+                    push @notes, @{ $notes->{notifications} };
+                    $cursor = $all && $notes->{cursor} ? $notes->{cursor} : ();
+                }
+            } while ($cursor);
+            if ($json) {
+                $self->say( JSON::Tiny::to_json $_->_raw ) for @notes;
+            }
+            else {
+                for my $note (@notes) {
+                    $self->say(
+                        '%s%s%s%s %s', color('red'), $note->author->handle->_raw,
+                        color('reset'),
+                        defined $note->author->displayName ? ' [' . $note->author->displayName . ']' : '',
+                        $note->author->did->_raw
+                    );
+                    $self->say(
+                        '  %s',
+                        $note->reason eq 'like'        ? 'liked ' . $note->record->{subject}{uri} :
+                            $note->reason eq 'repost'  ? 'reposted ' . $note->record->{subject}{uri} :
+                            $note->reason eq 'follow'  ? 'followed you' :
+                            $note->reason eq 'mention' ? 'mentioned you at ' . $note->record->{subject}{uri} :
+                            $note->reason eq 'reply'   ? 'replied at ' . $note->record->{subject}{uri} :
+                            $note->reason eq 'quote'   ? 'quoted you at ' . $note->record->{subject}{uri} :
+                            'unknown notification: ' . $note->reason
+                    );
+                }
+            }
+            return scalar @notes;
         }
 
-        method cmd_notif ($handle) {
-            ...;
+        method cmd_notif (@args) {
+            $self->cmd_notifications(@args);
         }
 
         method cmd_invitecodes () {

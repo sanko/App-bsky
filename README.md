@@ -72,7 +72,24 @@ Show profile.
 
 ## update-profile
 
-update profile
+```
+bsky update-profile --description "Looks like we made it!"
+
+bsky update-profile --name "John Smith"
+
+bsky update-profile --avatar https://cataas.com/cat?width=100 --banner https://cataas.com/cat?width=1000
+```
+
+Update profile elements.
+
+### Options
+
+```
+--avatar        optional, avatar image (url or local path)
+--banner        optional, banner image (url or local path)
+--description   optional, blurb about yourself
+--name          optional, display name
+```
 
 ## show-session
 
@@ -262,6 +279,28 @@ Delete an item.
 
 ```
 cid
+```
+
+## notifications
+
+```
+bsky notifications
+
+bsky notifications --all
+
+bsky notifications --json
+
+# shorthand
+bsky notif --all
+```
+
+Show notifications.
+
+### Options
+
+```
+--all               boolean flag, show all notifications
+--json              boolean flag; content is printed as JSON objects if given
 ```
 
 ## login

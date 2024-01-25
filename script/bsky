@@ -66,7 +66,20 @@ Show profile.
 
 =head2 update-profile
 
-update profile
+    bsky update-profile --description "Looks like we made it!"
+
+    bsky update-profile --name "John Smith"
+
+    bsky update-profile --avatar https://cataas.com/cat?width=100 --banner https://cataas.com/cat?width=1000
+
+Update profile elements.
+
+=head3 Options
+
+    --avatar        optional, avatar image (url or local path)
+    --banner        optional, banner image (url or local path)
+    --description   optional, blurb about yourself
+    --name          optional, display name
 
 =head2 show-session
 
@@ -213,6 +226,24 @@ Delete an item.
 =head3 Options
 
     cid
+
+=head2 notifications
+
+    bsky notifications
+
+    bsky notifications --all
+
+    bsky notifications --json
+
+    # shorthand
+    bsky notif --all
+
+Show notifications.
+
+=head3 Options
+
+    --all               boolean flag, show all notifications
+    --json              boolean flag; content is printed as JSON objects if given
 
 =head2 login
 
