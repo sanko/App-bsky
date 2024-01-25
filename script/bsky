@@ -303,10 +303,9 @@ shows a list of commands or help for one command
 
 =head1 Global Options
 
-   -a value       profile name
-   -V             verbose (default: false)
    --help, -h     show help
    --version, -v  print the version
+   -V             print verbose version info
 
 =head1 Configuration
 
@@ -318,7 +317,7 @@ Current configuration values include:
 
     bsky config wrap 100
 
-Sets word wrap width in characters for terminal output. The default is C<72>.
+Sets word wrap width in characters for terminal output. The default is C<0> which disables word wrap.
 
 =back
 

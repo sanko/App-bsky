@@ -378,10 +378,9 @@ shows a list of commands or help for one command
 # Global Options
 
 ```
--a value       profile name
--V             verbose (default: false)
 --help, -h     show help
 --version, -v  print the version
+-V             print verbose version info
 ```
 
 # Configuration
@@ -394,7 +393,7 @@ Current configuration values include:
     bsky config wrap 100
     ```
 
-    Sets word wrap width in characters for terminal output. The default is `72`.
+    Sets word wrap width in characters for terminal output. The default is `0` which disables word wrap.
 
 # See Also
 
