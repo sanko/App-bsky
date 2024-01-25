@@ -245,6 +245,18 @@ Unblock the handle.
 
     handle          user handle or DID
 
+=head2 blocks
+
+    bsky blocks
+
+    bsky blocks --json
+
+Show blocks.
+
+=head3 Options
+
+    --json              boolean flag; content is printed as JSON objects if given
+
 =head2 delete
 
     bsky delete [cid]

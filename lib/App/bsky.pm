@@ -389,8 +389,28 @@ package App::bsky 0.01 {
             $self->say( $profile->viewer->blocking );
         }
 
-        method cmd_blocks () {
-            ...;
+        method cmd_blocks (@args) {
+            GetOptionsFromArray( \@args, 'json!' => \my $json );
+            my @blocks;
+            my $cursor = ();
+            do {
+                my $follows = $bsky->graph_getBlocks( 100, $cursor );
+                push @blocks, @{ $follows->{blocks} };
+                $cursor = $follows->{cursor};
+            } while ($cursor);
+            if ($json) {
+                $self->say( JSON::Tiny::to_json $_->_raw ) for @blocks;
+            }
+            else {
+                for my $follow (@blocks) {
+                    $self->say(
+                        sprintf '%s%s%s%s %s%s%s',
+                        color('red'),  $follow->handle->_raw, color('reset'), defined $follow->displayName ? ' [' . $follow->displayName . ']' : '',
+                        color('blue'), $follow->did->_raw,    color('reset')
+                    );
+                }
+            }
+            return scalar @blocks;
         }
 
         method cmd_login ( $ident, $password, @args ) {

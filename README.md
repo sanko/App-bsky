@@ -303,6 +303,22 @@ Unblock the handle.
 handle          user handle or DID
 ```
 
+## blocks
+
+```
+bsky blocks
+
+bsky blocks --json
+```
+
+Show blocks.
+
+### Options
+
+```
+--json              boolean flag; content is printed as JSON objects if given
+```
+
 ## delete
 
 ```

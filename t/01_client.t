@@ -109,6 +109,7 @@ subtest 'block/unblock' => sub {
     like is_say { new_client->run(qw[block sankor.bsky.social]) }, qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.graph.block],
         'block sankor.bsky.social';
     sleep 1;    # sometimes the service has to catch up
+    like is_say { new_client->run(qw[blocks]) }, qr[sankor.bsky.social], 'blocks';
     like is_say { new_client->run(qw[unblock sankor.bsky.social]) }, qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.graph.block],
         'unblock sankor.bsky.social';
 };
