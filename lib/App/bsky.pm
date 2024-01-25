@@ -369,12 +369,24 @@ package App::bsky 0.01 {
             return scalar @followers;
         }
 
-        method cmd_block ($handle) {
-            ...;
+        method cmd_block ($actor) {    # takes handle or did
+            my $profile = $bsky->actor_getProfile($actor);
+            builtin::blessed $profile or return $self->err( $profile->{message} );
+            my $res = $bsky->repo_createRecord(
+                repo       => $config->{session}{did},
+                collection => 'app.bsky.graph.block',
+                record     => At::Lexicon::app::bsky::graph::block->new( createdAt => time, subject => $profile->did )
+            );
+            $self->say( $res->{uri}->as_string );
         }
 
-        method cmd_unblock ($handle) {
-            ...;
+        method cmd_unblock ($actor) {    # takes handle or did
+            my $profile = $bsky->actor_getProfile($actor);
+            builtin::blessed $profile or return $self->err( $profile->{message} );
+            return 0 unless $profile->viewer->blocking;
+            my ($rkey) = $profile->viewer->blocking =~ m[app.bsky.graph.block/(.*)$];
+            my $res = $bsky->repo_deleteRecord( repo => $config->{session}{did}, collection => 'app.bsky.graph.block', rkey => $rkey );
+            $self->say( $profile->viewer->blocking );
         }
 
         method cmd_blocks () {

@@ -217,6 +217,34 @@ Show followers.
     -H handle           alternative to --handle
     --json              boolean flag; content is printed as JSON objects if given
 
+=head2 block
+
+    bsky block [handle]
+
+    bsky block sankor.bsky.social
+
+    bsky block did:plc:2lk3pbakx2erxgotvzyeuyem
+
+Block the handle.
+
+=head3 Options
+
+    handle          user handle or DID
+
+=head2 unblock
+
+    bsky unblock [handle]
+
+    bsky unblock sankor.bsky.social
+
+    bsky unblock did:plc:2lk3pbakx2erxgotvzyeuyem
+
+Unblock the handle.
+
+=head3 Options
+
+    handle          user handle or DID
+
 =head2 delete
 
     bsky delete [cid]

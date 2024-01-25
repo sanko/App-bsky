@@ -267,6 +267,42 @@ Show followers.
 --json              boolean flag; content is printed as JSON objects if given
 ```
 
+## block
+
+```
+bsky block [handle]
+
+bsky block sankor.bsky.social
+
+bsky block did:plc:2lk3pbakx2erxgotvzyeuyem
+```
+
+Block the handle.
+
+### Options
+
+```perl
+handle          user handle or DID
+```
+
+## unblock
+
+```
+bsky unblock [handle]
+
+bsky unblock sankor.bsky.social
+
+bsky unblock did:plc:2lk3pbakx2erxgotvzyeuyem
+```
+
+Unblock the handle.
+
+### Options
+
+```perl
+handle          user handle or DID
+```
+
 ## delete
 
 ```

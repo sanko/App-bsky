@@ -103,10 +103,15 @@ subtest 'follow/unfollow' => sub {
         'unfollow did:plc:2lk3pbakx2erxgotvzyeuyem';
 };
 like is_say {
-    new_client->run(
-        qw[update-profile --avatar https://cataas.com/cat?width=100 --banner https://cataas.com/cat?width=1000]
-    )
+    new_client->run(qw[update-profile --avatar https://cataas.com/cat?width=100 --banner https://cataas.com/cat?width=1000])
 }, qr[did:plc:pwqewimhd3rxc4hg6ztwrcyj], 'update-profile --avatar ... --banner ...';
+subtest 'block/unblock' => sub {
+    like is_say { new_client->run(qw[block sankor.bsky.social]) }, qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.graph.block],
+        'block sankor.bsky.social';
+    sleep 1;    # sometimes the service has to catch up
+    like is_say { new_client->run(qw[unblock sankor.bsky.social]) }, qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.graph.block],
+        'unblock sankor.bsky.social';
+};
 like is_say { new_client->run(qw[notifications]) },        qr[did:plc:pwqewimhd3rxc4hg6ztwrcyj], 'notifications';
 like is_say { new_client->run(qw[notifications --json]) }, qr[^{],                               'notifications --json';
 like is_say { new_client->run(qw[show-session]) },         qr[did:plc:pwqewimhd3rxc4hg6ztwrcyj], 'show-session';
