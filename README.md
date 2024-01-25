@@ -128,7 +128,9 @@ Display posts from timeline.
 
 ## thread
 
-show thread
+Show thread.
+
+TODO
 
 ## post
 
@@ -137,16 +139,18 @@ post new text
 ## vote
 
 ```
-bsky vote [uri] [bool]
+bsky vote [uri] --down
 ```
 
-Vote on the post
+Vote on the post.
+
+TODO
 
 ### Options
 
 ```
 uri
-bool      optional, a true value (the default) votes the post up, an untrue value is a downvote
+--down      optional, if true, a downvote is cast, otherwise, the post is voted up
 ```
 
 ## votes
@@ -156,6 +160,8 @@ bsky votes [uri]
 ```
 
 Show votes of the post.
+
+TODO
 
 ### Options
 
@@ -169,7 +175,9 @@ uri
 bsky repost [uri]
 ```
 
-Repost the post
+Repost the post.
+
+TODO
 
 ### Options
 
@@ -183,7 +191,9 @@ uri
 bsky reposts [uri]
 ```
 
-Show reposts of the post
+Show reposts of the post.
+
+TODO
 
 ### Options
 

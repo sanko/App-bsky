@@ -110,7 +110,9 @@ Display posts from timeline.
 
 =head2 thread
 
-show thread
+Show thread.
+
+TODO
 
 =head2 post
 
@@ -118,20 +120,24 @@ post new text
 
 =head2 vote
 
-    bsky vote [uri] [bool]
+    bsky vote [uri] --down
 
-Vote on the post
+Vote on the post.
+
+TODO
 
 =head3 Options
 
     uri
-    bool      optional, a true value (the default) votes the post up, an untrue value is a downvote
+    --down      optional, if true, a downvote is cast, otherwise, the post is voted up
 
 =head2 votes
 
     bsky votes [uri]
 
 Show votes of the post.
+
+TODO
 
 =head3 Options
 
@@ -141,7 +147,9 @@ Show votes of the post.
 
     bsky repost [uri]
 
-Repost the post
+Repost the post.
+
+TODO
 
 =head3 Options
 
@@ -151,7 +159,9 @@ Repost the post
 
     bsky reposts [uri]
 
-Show reposts of the post
+Show reposts of the post.
+
+TODO
 
 =head3 Options
 
