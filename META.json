@@ -73,6 +73,7 @@
       },
       "test" : {
          "requires" : {
+            "Capture::Tiny" : "0",
             "Test2::V0" : "0"
          }
       }

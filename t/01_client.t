@@ -6,20 +6,18 @@ use App::bsky;
 use Path::Tiny;
 use Test2::Tools::Warnings qw[warns];
 use Text::Wrap;
+use Capture::Tiny;
 #
 my ( @err, @say );
 my $mock = mock 'App::bsky::CLI' => (
     override => [
         err => sub ( $self, $msg, $fatal //= 0 ) {
-            $Text::Wrap::columns //= 72;
-            $msg = Text::Wrap::wrap( '', '', $msg );
             note $msg;
             push @err, $msg;
             !$fatal;
         },
         say => sub ( $self, $msg, @etc ) {
-            $Text::Wrap::columns //= 72;
-            $msg = Text::Wrap::wrap( '', '', @etc ? sprintf $msg, @etc : $msg );
+            $msg = @etc ? sprintf $msg, @etc : $msg;
             note $msg;
             push @say, $msg;
             1;
@@ -56,7 +54,9 @@ ok new_client->run('-h'),                '-h';
 ok new_client->run('config'),            'config';
 ok !new_client->run(qw[config fake]),    'config fake';
 ok new_client->run(qw[config wrap 100]), 'config wrap 100';
-ok new_client->run(qw[config wrap]),     'config wrap';
+is is_say { new_client->run(qw[config wrap]) }, 100, 'config wrap == 100';
+ok new_client->run(qw[config wrap 0]), 'config wrap 0';
+is is_say { new_client->run(qw[config wrap]) }, 0, 'config wrap == 0';
 subtest 'login ... ... (error)' => sub {
     my $client;
     like warning {
@@ -135,6 +135,46 @@ like is_say { new_client->run(qw[notifications]) },        qr[did:plc:pwqewimhd3
 like is_say { new_client->run(qw[notifications --json]) }, qr[^{],                               'notifications --json';
 like is_say { new_client->run(qw[show-session]) },         qr[did:plc:pwqewimhd3rxc4hg6ztwrcyj], 'show-session';
 like is_say { new_client->run(qw[show-session --json]) },  qr[^{],                               'show-session --json';
+#
+{
+    no experimental 'signatures';
+
+    sub capture(&) {
+        my $code = shift;
+        my ( $err, $out ) = ( "", "" );
+
+        #~ my $handles = test2_stack->top->format->handles;
+        my ( $ok, $e );
+        {
+            my ( $out_fh, $err_fh );
+            open( $out_fh, '>', \$out ) or die "Failed to open a temporary STDOUT: $!";
+            open( $err_fh, '>', \$err ) or die "Failed to open a temporary STDERR: $!";
+
+            #~ test2_stack->top->format->set_handles([$out_fh, $err_fh, $out_fh]);
+            ( $ok, $e ) = $code->();
+        }
+
+        #~ test2_stack->top->format->set_handles($handles);
+        die $e unless $ok;
+        $err =~ s/ $/_/mg;
+        $out =~ s/ $/_/mg;
+        return { STDOUT => $out, STDERR => $err, };
+    }
+}
+subtest 'internal say/err' => sub {
+    $mock = undef;
+    my $client = new_client;
+    my ( $stdout, $stderr, $count ) = Capture::Tiny::capture(
+        sub {
+            $client->run(qw[config wrap 10]);
+            $client->say( 'X' x 50 );
+            $client->run(qw[config wrap 0]);
+            $client->err( 'Y' x 50 );
+        }
+    );
+    like $stdout, qr[^X{9}$]m,  'say wraps';
+    like $stderr, qr[^Y{50}$]m, 'err wraps';
+};
 #
 done_testing;
 __END__
