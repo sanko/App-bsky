@@ -1,11 +1,10 @@
 requires 'perl', '5.038000';    # class syntax
-requires 'At',   '0.11';
+requires 'At',   '0.13';
 requires 'Getopt::Long';
 requires 'Pod::Text::Color';
 requires 'Path::Tiny';
 requires 'File::HomeDir';
 requires 'JSON::Tiny';
-requires 'MIME::Base64';
 requires 'Term::ANSIColor';
 requires 'Text::Wrap';
 on 'test' => sub {

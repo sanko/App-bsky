@@ -1,4 +1,4 @@
-package App::bsky 0.01 {
+package App::bsky 0.02 {
     use v5.38;
     use utf8;
     use Bluesky;
@@ -23,27 +23,12 @@ package App::bsky 0.01 {
             $config_file = path($config_file) unless builtin::blessed $config_file;
             $self->config;
             if ( defined $config->{session}{accessJwt} ) {    # Check if the tokens are expired...
-
-                sub _decode_token ($token) {
-                    use MIME::Base64 qw[decode_base64];
-                    my ( $header, $payload, $sig ) = split /\./, $token;
-                    $payload =~ tr[-_][+/];    # Replace Base64-URL characters with standard Base64
-                    decode_json decode_base64 $payload;
-                }
-                my $access  = _decode_token $config->{session}{accessJwt};
-                my $refresh = _decode_token $config->{session}{refreshJwt};
-                if ( $refresh->{exp} > time ) {
-                    $bsky = Bluesky->resume( %{ $config->{session} } );
-                    $config->{session} = $bsky->session;
-                    $self->put_config;
-                }
-                else {
-                    $self->err('Please log in');
-                }
+                $bsky = Bluesky->resume( %{ $config->{session} } );
+                $config->{session} = $bsky->session;
+                $self->put_config;
+                return if defined $config->{session}{accessJwt};
             }
-            else {
-                $bsky = Bluesky->new();
-            }
+            $bsky = Bluesky->new();
         }
 
         method config() {

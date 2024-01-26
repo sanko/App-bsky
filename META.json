@@ -59,11 +59,10 @@
       },
       "runtime" : {
          "requires" : {
-            "At" : "0.11",
+            "At" : "0.13",
             "File::HomeDir" : "0",
             "Getopt::Long" : "0",
             "JSON::Tiny" : "0",
-            "MIME::Base64" : "0",
             "Path::Tiny" : "0",
             "Pod::Text::Color" : "0",
             "Term::ANSIColor" : "0",
@@ -90,7 +89,7 @@
          "web" : "https://github.com/sanko/App-bsky"
       }
    },
-   "version" : "0.01",
+   "version" : "0.02",
    "x_authority" : "cpan:SANKO",
    "x_serialization_backend" : "JSON::PP version 4.16",
    "x_static_install" : 1
