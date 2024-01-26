@@ -59,7 +59,8 @@ my $mock = mock 'App::bsky::CLI' => (
         my $code = shift;
         @say = ();
         $code->();
-        wantarray ? @say : join "\n", @say;
+        return 0 if !$say[0];
+        wantarray ? @say : join "\n", @say if @say;
     }
 }
 #
