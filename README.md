@@ -376,6 +376,42 @@ Show notifications.
 --json              boolean flag; content is printed as JSON objects if given
 ```
 
+## add-app-password
+
+```
+bsky add-app-password "Your app name"
+```
+
+Create a new App password.
+
+Note that you must be logged in with the account password to add a new app password.
+
+## revoke-app-password
+
+```
+bsky revoke-app-password "Your app name"
+```
+
+Delete App password.
+
+Note that you must be logged in with the account password to revoke an app password.
+
+## list-app-passwords
+
+```
+bsky list-app-passwords
+
+bsky list-app-passwords --json
+```
+
+Show App passwords.
+
+### Options
+
+```
+--json              boolean flag; content is printed as JSON objects if given
+```
+
 ## login
 
 ```

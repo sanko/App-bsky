@@ -51,7 +51,9 @@ my $mock = mock 'App::bsky::CLI' => (
         my $code = shift;
         @err = ();
         $code->();
-        wantarray ? @err : join "\n", @err;
+        my $msg = join "\n", @say;
+        note $msg;
+        wantarray ? @say : $msg if @say;
     }
 
     sub is_say(&) {
@@ -59,7 +61,9 @@ my $mock = mock 'App::bsky::CLI' => (
         @say = ();
         $code->();
         return 0 if !$say[0];
-        wantarray ? @say : join "\n", @say if @say;
+        my $msg = join "\n", @say;
+        note $msg;
+        wantarray ? @say : $msg if @say;
     }
 }
 #
@@ -82,7 +86,7 @@ is is_say { client->run(qw[config wrap]) }, 0, 'config wrap == 0';
 #
 subtest 'live' => sub {
     my $todo = todo 'Rate limit or another login info error...';
-    eval {
+    todo 'using the web... things may go wrong that are not our fault' => sub {
         subtest 'login ... ... (error)' => sub {
             my $client;
             like warning {
@@ -161,10 +165,12 @@ subtest 'live' => sub {
             qr[did:plc:qvzn322kmcvd7xtnips5xaun], 'thread at://...';
         like is_say { client->run(qw[thread at://did:plc:qdvyf5jhuxqx667ay7k7nagl/app.bsky.feed.post/3kju327qezs2n --json]) }, qr[^{],
             'thread --json at://...';
-        like is_say { client->run(qw[notifications]) },        qr[did:plc:pwqewimhd3rxc4hg6ztwrcyj], 'notifications';
-        like is_say { client->run(qw[notifications --json]) }, qr[^{],                               'notifications --json';
-        like is_say { client->run(qw[show-session]) },         qr[did:plc:pwqewimhd3rxc4hg6ztwrcyj], 'show-session';
-        like is_say { client->run(qw[show-session --json]) },  qr[^{],                               'show-session --json';
+        like is_say { client->run(qw[list-app-passwords]) },        qr[Test Suite - bsky],                'list-app-passwords';
+        like is_say { client->run(qw[list-app-passwords --json]) }, qr[^\[\{],                            'list-app-passwords --json';
+        like is_say { client->run(qw[notifications]) },             qr[did:plc:pwqewimhd3rxc4hg6ztwrcyj], 'notifications';
+        like is_say { client->run(qw[notifications --json]) },      qr[^{],                               'notifications --json';
+        like is_say { client->run(qw[show-session]) },              qr[did:plc:pwqewimhd3rxc4hg6ztwrcyj], 'show-session';
+        like is_say { client->run(qw[show-session --json]) },       qr[^{],                               'show-session --json';
     }
 };
 done_testing;

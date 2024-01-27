@@ -476,16 +476,30 @@ package App::bsky 0.02 {
             ...;
         }
 
-        method cmd_listapppasswords ($handle) {
-            ...;
+        method cmd_listapppasswords (@args) {
+            GetOptionsFromArray( \@args, 'json' => \my $json );
+            my $passwords = $bsky->server_listAppPasswords;
+            my @passwords = @{ $passwords->{passwords} };
+            if ($json) {
+                $self->say( JSON::Tiny::to_json [ map { $_->_raw } @passwords ] );
+            }
+            else {
+                $self->say( '%s (%s)', $_->name, $_->createdAt->_raw ) for @passwords;
+            }
+            scalar @passwords;
         }
 
-        method cmd_addapppassword ($handle) {
-            ...;
+        method cmd_addapppassword ($name) {
+            my $res = $bsky->server_createAppPassword($name);
+            if ( builtin::blessed $res->{appPassword} ) {
+                $self->say( 'App name: %s', $res->{appPassword}->name );
+                $self->say( 'Password: %s', $res->{appPassword}->password );
+            }
+            1;
         }
 
-        method cmd_revokeapppassword ($handle) {
-            ...;
+        method cmd_revokeapppassword ($name) {
+            $bsky->server_revokeAppPassword($name) ? 1 : 0;
         }
 
         method cmd_config ( $field //= (), $value //= () ) {

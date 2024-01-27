@@ -12,18 +12,18 @@ subtest 'commands' => sub {
         cmd_timeline    cmd_tl
         cmd_stream
         cmd_thread
-        cmd_post        cmd_delete
-        cmd_vote        cmd_votes
-        cmd_repost      cmd_reposts
-        cmd_follow      cmd_unfollow    cmd_follows     cmd_followers
-        cmd_block       cmd_unblock     cmd_blocks
+        cmd_post    cmd_delete
+        cmd_vote    cmd_votes
+        cmd_repost  cmd_reposts
+        cmd_follow  cmd_unfollow    cmd_follows cmd_followers
+        cmd_block   cmd_unblock     cmd_blocks
         cmd_login
-        cmd_notifications               cmd_notif
-        cmd_invitecodes cmd_listapppasswords
-        cmd_addapppassword              cmd_revokeapppassword
+        cmd_notifications   cmd_notif
+        cmd_invitecodes
+        cmd_listapppasswords    cmd_addapppassword  cmd_revokeapppassword
         cmd_config
         cmd_help
-        cmd_VERSION     cmd_version
+        cmd_VERSION cmd_version
     ];
 };
 subtest 'internals' => sub {
