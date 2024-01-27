@@ -13,7 +13,7 @@ subtest 'commands' => sub {
         cmd_stream
         cmd_thread
         cmd_post    cmd_delete
-        cmd_vote    cmd_votes
+        cmd_like    cmd_unlike      cmd_likes
         cmd_repost  cmd_reposts
         cmd_follow  cmd_unfollow    cmd_follows cmd_followers
         cmd_block   cmd_unblock     cmd_blocks

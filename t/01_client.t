@@ -96,7 +96,7 @@ subtest 'live' => sub {
         };
         ok client->run(qw[login atperl.bsky.social qbhd-opac-arvg-j7ol]), 'login ... ...';
         ok client->run(qw[tl]),                                           'timeline';
-        like is_say { client->run(qw[tl --json]) },                                qr[^{],                 'timeline --json';
+        like is_say { client->run(qw[tl --json]) },                                qr[^\[\{],              'timeline --json';
         like is_say { client->run(qw[show-profile]) },                             qr[atperl.bsky.social], 'show-profile';
         like is_say { client->run(qw[show-profile --json]) },                      qr[^{],                 'show-profile --json';
         like is_say { client->run(qw[show-profile --handle sankor.bsky.social]) }, qr[sankor.bsky.social], 'show-profile --handle sankor.bsky.social';
@@ -105,7 +105,7 @@ subtest 'live' => sub {
         like is_say { client->run(qw[show-profile --json -H sankor.bsky.social]) }, qr["sankor], 'show-profile --json -H sankor.bsky.social';
         subtest 'follows' => sub {
             like is_say { client->run(qw[follows]) },                                    qr[atproto.com], 'follows';
-            like is_say { client->run(qw[follows --json]) },                             qr[^{],          'follows --json';
+            like is_say { client->run(qw[follows --json]) },                             qr[^\[\{],       'follows --json';
             like is_say { client->run(qw[follows --handle sankor.bsky.social]) },        qr[atproto.com], 'follows --handle sankor.bsky.social';
             like is_say { client->run(qw[follows --json --handle sankor.bsky.social]) }, qr["bsky.app"], 'follows --json --handle sankor.bsky.social';
             like is_say { client->run(qw[follows --json -H sankor.bsky.social]) },       qr["bsky.app"], 'follows --json -H sankor.bsky.social';
@@ -113,7 +113,7 @@ subtest 'live' => sub {
         subtest 'followers' => sub {    # These tests might fail! I cannot control who follows the test account
             my $todo = todo 'I cannot control who follows the test account';
             like is_say { client->run(qw[followers]) },                             qr[deal.bsky.social], 'followers';
-            like is_say { client->run(qw[followers --json]) },                      qr[^{],               'followers --json';
+            like is_say { client->run(qw[followers --json]) },                      qr[^\[\{],            'followers --json';
             like is_say { client->run(qw[followers --handle sankor.bsky.social]) }, qr[atproto.com],      'followers --handle sankor.bsky.social';
             like is_say { client->run(qw[followers --json --handle sankor.bsky.social]) }, qr["bsky.app"],
                 'followers --json --handle sankor.bsky.social';
@@ -124,16 +124,20 @@ subtest 'live' => sub {
                 if is_say { client->run(qw[follows]) } =~ qr[sankor.bsky.social];
             skip_all 'sankor.bsky.social is blocked and cannot be followed; might be a race condition with another smoker'
                 if is_say { client->run(qw[blocks]) } =~ qr[sankor.bsky.social];
+            sleep 1;
             like is_say { client->run(qw[follow sankor.bsky.social]) }, qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.graph.follow],
                 'follow sankor.bsky.social';
+            sleep 1;
             like is_say { client->run(qw[follows]) }, qr[sankor.bsky.social], 'follows';
             sleep 1;    # sometimes the service has to catch up
             like is_say { client->run(qw[unfollow sankor.bsky.social]) }, qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.graph.follow],
                 'unfollow sankor.bsky.social';
+            sleep 1;
             unlike is_say { client->run(qw[follows]) }, qr[sankor.bsky.social], 'follows';
             sleep 1;    # sometimes the service has to catch up
             like is_say { client->run(qw[follow did:plc:2lk3pbakx2erxgotvzyeuyem]) },
                 qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.graph.follow], 'follow did:plc:2lk3pbakx2erxgotvzyeuyem';
+            sleep 1;    # sometimes the service has to catch up
             like is_say { client->run(qw[follows]) }, qr[sankor.bsky.social], 'follows';
             sleep 1;    # sometimes the service has to catch up
             like is_say { client->run(qw[unfollow did:plc:2lk3pbakx2erxgotvzyeuyem]) },
@@ -149,8 +153,10 @@ subtest 'live' => sub {
                 if is_say { client->run(qw[blocks]) } =~ qr[sankor.bsky.social];
 
             #~ skip_all 'testing!';
-            like is_say { client->run(qw[block sankor.bsky.social]) }, qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.graph.block],
-                'block sankor.bsky.social';
+            todo 'service might be low updating profile info...' => sub {
+                like is_say { client->run(qw[block sankor.bsky.social]) }, qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.graph.block],
+                    'block sankor.bsky.social';
+            };
             sleep 1;    # sometimes the service has to catch up
             like is_say { client->run(qw[blocks]) }, qr[sankor.bsky.social], 'blocks';
             like is_say { client->run(qw[unblock sankor.bsky.social]) }, qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.graph.block],
@@ -159,6 +165,12 @@ subtest 'live' => sub {
         subtest 'post/delete' => sub {
             like my $uri = is_say { client->run(qw[post Demo]) }, qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.feed.post], 'post Demo';
             sleep 1;    # sometimes the service has to catch up
+            ok client->run( 'like', $uri ), 'like at://...';
+            sleep 1;
+            like is_say { client->run( 'likes', $uri ) }, qr[atperl.bsky.social], 'likes at://...';
+            sleep 1;
+            ok client->run( 'like', $uri ), 'like at://...';
+            sleep 1;
             ok client->run( 'delete', $uri ), 'delete at://...';
         };
         like is_say { client->run(qw[thread at://did:plc:qdvyf5jhuxqx667ay7k7nagl/app.bsky.feed.post/3kju327qezs2n]) },
@@ -168,7 +180,7 @@ subtest 'live' => sub {
         like is_say { client->run(qw[list-app-passwords]) },        qr[Test Suite - bsky],                'list-app-passwords';
         like is_say { client->run(qw[list-app-passwords --json]) }, qr[^\[\{],                            'list-app-passwords --json';
         like is_say { client->run(qw[notifications]) },             qr[did:plc:pwqewimhd3rxc4hg6ztwrcyj], 'notifications';
-        like is_say { client->run(qw[notifications --json]) },      qr[^{],                               'notifications --json';
+        like is_say { client->run(qw[notifications --json]) },      qr[^\[\{],                            'notifications --json';
         like is_say { client->run(qw[show-session]) },              qr[did:plc:pwqewimhd3rxc4hg6ztwrcyj], 'show-session';
         like is_say { client->run(qw[show-session --json]) },       qr[^{],                               'show-session --json';
     }

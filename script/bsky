@@ -128,24 +128,23 @@ Show a thread.
 
 Create a new post.
 
-=head2 vote
+=head2 like
 
-    bsky vote [uri] --down
+    bsky like [uri]
 
-Vote on the post.
+Like a post.
 
 TODO
 
 =head3 Options
 
     uri
-    --down      optional, if true, a downvote is cast, otherwise, the post is voted up
 
-=head2 votes
+=head2 likes
 
-    bsky votes [uri]
+    bsky likes [uri]
 
-Show votes of the post.
+Show likes on a post.
 
 TODO
 
@@ -303,6 +302,20 @@ Show notifications.
 =head3 Options
 
     --all               boolean flag, show all notifications
+    --json              boolean flag; content is printed as JSON objects if given
+
+=head2 invite-codes
+
+    bsky invite-codes
+
+    bsky invite-codes --json
+
+Show invite codes.
+
+Note that you must be logged in with the account password to view invite codes.
+
+=head3 Options
+
     --json              boolean flag; content is printed as JSON objects if given
 
 =head2 add-app-password

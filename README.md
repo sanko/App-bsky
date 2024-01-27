@@ -147,13 +147,13 @@ post "This is a test"
 
 Create a new post.
 
-## vote
+## like
 
 ```
-bsky vote [uri] --down
+bsky like [uri]
 ```
 
-Vote on the post.
+Like a post.
 
 TODO
 
@@ -161,16 +161,15 @@ TODO
 
 ```
 uri
---down      optional, if true, a downvote is cast, otherwise, the post is voted up
 ```
 
-## votes
+## likes
 
 ```
-bsky votes [uri]
+bsky likes [uri]
 ```
 
-Show votes of the post.
+Show likes on a post.
 
 TODO
 
@@ -373,6 +372,24 @@ Show notifications.
 
 ```
 --all               boolean flag, show all notifications
+--json              boolean flag; content is printed as JSON objects if given
+```
+
+## invite-codes
+
+```
+bsky invite-codes
+
+bsky invite-codes --json
+```
+
+Show invite codes.
+
+Note that you must be logged in with the account password to view invite codes.
+
+### Options
+
+```
 --json              boolean flag; content is printed as JSON objects if given
 ```
 

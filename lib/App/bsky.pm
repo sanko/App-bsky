@@ -258,7 +258,7 @@ package App::bsky 0.02 {
 
             #$algorithm //= (), $limit //= (), $cursor //= ()
             if ($json) {
-                $self->say( JSON::Tiny::to_json( $_->_raw ) ) for @{ $tl->{feed} };
+                $self->say( JSON::Tiny::to_json [ map { $_->_raw } @{ $tl->{feed} } ] );
             }
             else {    # TODO: filter where $type ne 'app.bsky.feed.post'
                 for my $post ( @{ $tl->{feed} } ) {
@@ -300,12 +300,39 @@ package App::bsky 0.02 {
             $bsky->delete($rkey);
         }
 
-        method cmd_vote ( $uri, $bool //= !!1 ) {
-            ...;
+        method cmd_like ($uri) {    # can take the post uri
+
+            #~ GetOptionsFromArray( \@args, 'json!' => \my $json );
+            my $res = $bsky->like($uri);
+            $res // return;
+            $self->say( $res->{uri}->as_string );
         }
 
-        method cmd_votes ($uri) {
-            ...;
+        method cmd_unlike ($uri) {    # can take the post uri or the like uri
+            $bsky->unlike($uri);
+        }
+
+        method cmd_likes ( $uri, @args ) {
+            GetOptionsFromArray( \@args, 'json!' => \my $json );
+            my @likes;
+            my $cursor = ();
+            do {
+                my $likes = $bsky->feed_getLikes( $uri, undef, 100, $cursor );
+                push @likes, @{ $likes->{likes} };
+                $cursor = $likes->{cursor};
+            } while ($cursor);
+            if ($json) {
+                $self->say( JSON::Tiny::to_json [ map { $_->_raw } @likes ] );
+            }
+            else {
+                $self->say(
+                    '%s%s%s%s (%s)',
+                    color('red'),   $_->actor->handle->_raw,
+                    color('reset'), defined $_->actor->displayName ? ' [' . $_->actor->displayName . ']' : '',
+                    $_->createdAt->_raw
+                ) for @likes;
+            }
+            scalar @likes;
         }
 
         method cmd_repost ($uri) {
@@ -340,7 +367,7 @@ package App::bsky 0.02 {
                 $cursor = $follows->{cursor};
             } while ($cursor);
             if ($json) {
-                $self->say( JSON::Tiny::to_json $_->_raw ) for @follows;
+                $self->say( JSON::Tiny::to_json [ map { $_->_raw } @follows ] );
             }
             else {
                 for my $follow (@follows) {
@@ -366,7 +393,7 @@ package App::bsky 0.02 {
                 }
             } while ($cursor);
             if ($json) {
-                $self->say( JSON::Tiny::to_json $_->_raw ) for @followers;
+                $self->say( JSON::Tiny::to_json [ map { $_->_raw } @followers ] );
             }
             else {
                 for my $follower (@followers) {
@@ -401,7 +428,7 @@ package App::bsky 0.02 {
                 $cursor = $follows->{cursor};
             } while ($cursor);
             if ($json) {
-                $self->say( JSON::Tiny::to_json $_->_raw ) for @blocks;
+                $self->say( JSON::Tiny::to_json [ map { $_->_raw } @blocks ] );
             }
             else {
                 for my $follow (@blocks) {
@@ -432,7 +459,7 @@ package App::bsky 0.02 {
         }
 
         method cmd_notifications (@args) {
-            GetOptionsFromArray( \@args, 'all|a' => \my $all, 'json' => \my $json );
+            GetOptionsFromArray( \@args, 'all|a' => \my $all, 'json!' => \my $json );
             my @notes;
             my $cursor = ();
             do {
@@ -443,7 +470,7 @@ package App::bsky 0.02 {
                 }
             } while ($cursor);
             if ($json) {
-                $self->say( JSON::Tiny::to_json $_->_raw ) for @notes;
+                $self->say( JSON::Tiny::to_json [ map { $_->_raw } @notes ] );
             }
             else {
                 for my $note (@notes) {
@@ -472,12 +499,20 @@ package App::bsky 0.02 {
             $self->cmd_notifications(@args);
         }
 
-        method cmd_invitecodes () {
-            ...;
+        method cmd_invitecodes (@args) {
+            GetOptionsFromArray( \@args, 'json!' => \my $json, 'used!' => \my $used );
+            my $res = $bsky->server_getAccountInviteCodes($used);
+            if ($json) {
+                $self->say( JSON::Tiny::to_json [ map { $_->_raw } @{ $res->{codes} } ] );
+            }
+            else {
+                $self->say( $_->code . ( $_->available ? '' : ' [unavailable]' ) . ( $_->disabled ? ' [disabled]' : '' ) ) for @{ $res->{codes} };
+            }
+            scalar @{ $res->{codes} };
         }
 
         method cmd_listapppasswords (@args) {
-            GetOptionsFromArray( \@args, 'json' => \my $json );
+            GetOptionsFromArray( \@args, 'json!' => \my $json );
             my $passwords = $bsky->server_listAppPasswords;
             my @passwords = @{ $passwords->{passwords} };
             if ($json) {
