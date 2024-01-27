@@ -113,7 +113,7 @@ Display posts from timeline.
 
 =head2 thread
 
-    thread at://did:plc:qdvyf5jhuxqx667ay7k7nagl/app.bsky.feed.post/3kju327qezs2n
+    thread at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.feed.post/3kjyoh75qne2w
 
 Show a thread.
 
@@ -130,51 +130,43 @@ Create a new post.
 
 =head2 like
 
-    bsky like [uri]
+    bsky like at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.feed.post/3kjyoh75qne2w
 
 Like a post.
 
-TODO
+=head2 unlike
 
-=head3 Options
+    bsky unlike at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.feed.post/3kjyoh75qne2w
 
-    uri
+    bsky unlike at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.feed.like/3kjyml72tqu2y
+
+Unlike a post. Either the direct feed URI or the like URI printed by C<bsky like ...>.
 
 =head2 likes
 
-    bsky likes [uri]
+    bsky likes at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.feed.post/3kjyoh75qne2w
 
 Show likes on a post.
 
-TODO
-
 =head3 Options
 
-    uri
+    --json              boolean flag; content is printed as JSON objects if given
 
 =head2 repost
 
-    bsky repost [uri]
+    bsky repost at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.feed.post/3kjyoh75qne2w
 
 Repost the post.
 
-TODO
-
-=head3 Options
-
-    uri
-
 =head2 reposts
 
-    bsky reposts [uri]
+    bsky reposts at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.feed.post/3kjyoh75qne2w
 
 Show reposts of the post.
 
-TODO
-
 =head3 Options
 
-    uri
+    --json              boolean flag; content is printed as JSON objects if given
 
 =head2 follow
 
@@ -278,13 +270,9 @@ Show blocks.
 
 =head2 delete
 
-    bsky delete [cid]
+    bsky delete at://did:p...
 
-Delete an item.
-
-=head3 Options
-
-    cid
+Delete a post, repost, etc.
 
 =head2 notifications
 

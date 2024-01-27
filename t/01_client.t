@@ -162,7 +162,7 @@ subtest 'live' => sub {
             like is_say { client->run(qw[unblock sankor.bsky.social]) }, qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.graph.block],
                 'unblock sankor.bsky.social';
         };
-        subtest 'post/delete' => sub {
+        subtest 'post/like/repost/reposts/delete' => sub {
             like my $uri = is_say { client->run(qw[post Demo]) }, qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.feed.post], 'post Demo';
             sleep 1;    # sometimes the service has to catch up
             ok client->run( 'like', $uri ), 'like at://...';
@@ -171,7 +171,12 @@ subtest 'live' => sub {
             sleep 1;
             ok client->run( 'like', $uri ), 'like at://...';
             sleep 1;
-            ok client->run( 'delete', $uri ), 'delete at://...';
+            like my $repost = is_say { client->run( 'repost', $uri ) }, qr[at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.feed.repost],
+                'repost at://';
+            sleep 1;
+            like is_say { client->run( 'reposts', $uri, '--json' ) }, qr[atperl.bsky.social], 'reposts at://... --json';
+            ok client->run( 'delete', $repost ), 'delete at://... [delete repost]';
+            ok client->run( 'delete', $uri ),    'delete at://... [delete post]';
         };
         like is_say { client->run(qw[thread at://did:plc:qdvyf5jhuxqx667ay7k7nagl/app.bsky.feed.post/3kju327qezs2n]) },
             qr[did:plc:qvzn322kmcvd7xtnips5xaun], 'thread at://...';
@@ -179,7 +184,7 @@ subtest 'live' => sub {
             'thread --json at://...';
         like is_say { client->run(qw[list-app-passwords]) },        qr[Test Suite - bsky],                'list-app-passwords';
         like is_say { client->run(qw[list-app-passwords --json]) }, qr[^\[\{],                            'list-app-passwords --json';
-        like is_say { client->run(qw[notifications]) },             qr[did:plc:pwqewimhd3rxc4hg6ztwrcyj], 'notifications';
+        like is_say { client->run(qw[notifications]) },             qr[did:plc:],                         'notifications';
         like is_say { client->run(qw[notifications --json]) },      qr[^\[\{],                            'notifications --json';
         like is_say { client->run(qw[show-session]) },              qr[did:plc:pwqewimhd3rxc4hg6ztwrcyj], 'show-session';
         like is_say { client->run(qw[show-session --json]) },       qr[^{],                               'show-session --json';

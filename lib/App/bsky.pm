@@ -1,4 +1,4 @@
-package App::bsky 0.02 {
+package App::bsky 0.03 {
     use v5.38;
     use utf8;
     use Bluesky;
@@ -301,8 +301,6 @@ package App::bsky 0.02 {
         }
 
         method cmd_like ($uri) {    # can take the post uri
-
-            #~ GetOptionsFromArray( \@args, 'json!' => \my $json );
             my $res = $bsky->like($uri);
             $res // return;
             $self->say( $res->{uri}->as_string );
@@ -336,11 +334,28 @@ package App::bsky 0.02 {
         }
 
         method cmd_repost ($uri) {
-            ...;
+            my $res = $bsky->repost($uri);
+            $res // return;
+            $self->say( $res->{uri}->as_string );
         }
 
-        method cmd_reposts ($uri) {
-            ...;
+        method cmd_reposts ( $uri, @args ) {
+            GetOptionsFromArray( \@args, 'json!' => \my $json );
+            my @reposts;
+            my $cursor = ();
+            do {
+                my $reposts = $bsky->feed_getRepostedBy( $uri, undef, 100, $cursor );
+                push @reposts, @{ $reposts->{repostedBy} };
+                $cursor = $reposts->{cursor};
+            } while ($cursor);
+            if ($json) {
+                $self->say( JSON::Tiny::to_json [ map { $_->_raw } @reposts ] );
+            }
+            else {
+                $self->say( '%s%s%s%s', color('red'), $_->handle->_raw, color('reset'), defined $_->displayName ? ' [' . $_->displayName . ']' : '' )
+                    for @reposts;
+            }
+            scalar @reposts;
         }
 
         method cmd_follow ($actor) {    # takes handle or did

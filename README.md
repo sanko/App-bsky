@@ -127,7 +127,7 @@ Display posts from timeline.
 ## thread
 
 ```
-thread at://did:plc:qdvyf5jhuxqx667ay7k7nagl/app.bsky.feed.post/3kju327qezs2n
+thread at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.feed.post/3kjyoh75qne2w
 ```
 
 Show a thread.
@@ -150,65 +150,55 @@ Create a new post.
 ## like
 
 ```
-bsky like [uri]
+bsky like at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.feed.post/3kjyoh75qne2w
 ```
 
 Like a post.
 
-TODO
-
-### Options
+## unlike
 
 ```
-uri
+bsky unlike at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.feed.post/3kjyoh75qne2w
+
+bsky unlike at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.feed.like/3kjyml72tqu2y
 ```
+
+Unlike a post. Either the direct feed URI or the like URI printed by `bsky like ...`.
 
 ## likes
 
 ```
-bsky likes [uri]
+bsky likes at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.feed.post/3kjyoh75qne2w
 ```
 
 Show likes on a post.
 
-TODO
-
 ### Options
 
 ```
-uri
+--json              boolean flag; content is printed as JSON objects if given
 ```
 
 ## repost
 
 ```
-bsky repost [uri]
+bsky repost at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.feed.post/3kjyoh75qne2w
 ```
 
 Repost the post.
 
-TODO
-
-### Options
-
-```
-uri
-```
-
 ## reposts
 
 ```
-bsky reposts [uri]
+bsky reposts at://did:plc:pwqewimhd3rxc4hg6ztwrcyj/app.bsky.feed.post/3kjyoh75qne2w
 ```
 
 Show reposts of the post.
 
-TODO
-
 ### Options
 
 ```
-uri
+--json              boolean flag; content is printed as JSON objects if given
 ```
 
 ## follow
@@ -342,16 +332,10 @@ Show blocks.
 ## delete
 
 ```
-bsky delete [cid]
+bsky delete at://did:p...
 ```
 
-Delete an item.
-
-### Options
-
-```
-cid
-```
+Delete a post, repost, etc.
 
 ## notifications
 
