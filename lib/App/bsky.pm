@@ -13,7 +13,6 @@ package App::bsky 0.02 {
         use File::HomeDir;
         use Getopt::Long qw[GetOptionsFromArray];
         use Term::ANSIColor;
-        use Text::Wrap;
         #
         field $bsky;
         field $config;
@@ -48,19 +47,28 @@ package App::bsky 0.02 {
         }
         method put_config() { $config_file->spew_utf8( JSON::Tiny::to_json $config ); }
 
+        sub _wrap_and_indent {
+            my ( $width, $indent, $string ) = @_;
+            my $size        = $width - $indent;
+            my $indentation = ' ' x $indent;
+            $string =~ s[(.{1,$size})(\s+|$)][$1\n]g if $size > 0;
+            $string =~ s[^\s+|\n(\s+)][$1//'']gme;                   # Preserve leading whitespace
+            $string =~ s/^/$indentation/gm;
+            return $string;
+        }
+
         method err ( $msg, $fatal //= 0 ) {
-            $Text::Wrap::columns = $config->{settings}{wrap};
-            $msg = Text::Wrap::wrap( '', '', $msg ) if length $msg && $config->{settings}{wrap};
+            my $indent = $msg =~ /^(\s*)/ ? $1 : '';
+            $msg = _wrap_and_indent( $config->{settings}{wrap}, length $indent, $msg ) if length $msg;
             die "$msg\n" if $fatal;
             warn "$msg\n";
             !$fatal;
         }
 
         method say ( $msg, @etc ) {
-            $Text::Wrap::columns = $config->{settings}{wrap};
             $msg = @etc ? sprintf $msg, @etc : $msg;
             my $indent = $msg =~ /^(\s*)/ ? $1 : '';
-            $msg = Text::Wrap::wrap( '', $indent, $msg ) if length $msg && $config->{settings}{wrap};
+            $msg = _wrap_and_indent( $config->{settings}{wrap}, length $indent, $msg ) if length $msg;
             CORE::say $msg;
             1;
         }
@@ -84,6 +92,7 @@ package App::bsky 0.02 {
 
         method cmd_showprofile (@args) {
             GetOptionsFromArray( \@args, 'json!' => \my $json, 'handle|H=s' => \my $handle );
+            return $self->cmd_help('show-profile') if scalar @args;
             my $profile = $bsky->actor_getProfile( $handle // $config->{session}{handle} );
             if ($json) {
                 $self->say( JSON::Tiny::to_json( $profile->_raw ) );
@@ -95,8 +104,11 @@ package App::bsky 0.02 {
                 $self->say( 'Description: %s', $profile->description // '' );
                 $self->say( 'Follows: %d',     $profile->followsCount );
                 $self->say( 'Followers: %d',   $profile->followersCount );
-                $self->say( 'Avatar: %s',      $profile->avatar // '' );
-                $self->say( 'Banner: %s',      $profile->banner // '' );
+                $self->say( 'Avatar: %s',      $profile->avatar ) if $profile->avatar;
+                $self->say( 'Banner: %s',      $profile->banner ) if $profile->banner;
+                $self->say('Blocks you: yes') if $profile->viewer->blockedBy // ();
+                $self->say('Following: yes')  if $profile->viewer->following // ();
+                $self->say('Muted: yes')      if $profile->viewer->muted     // ();
             }
             1;
         }
@@ -203,6 +215,41 @@ package App::bsky 0.02 {
             return 1;
         }
 
+        method _dump_post ( $depth, $post ) {
+            if ( $post->isa('At::Lexicon::app::bsky::feed::threadViewPost') && builtin::blessed $post->parent ) {
+                $self->_dump_post( $depth++, $post->parent );
+                $post = $post->post;
+            }
+            elsif ( $post->isa('At::Lexicon::app::bsky::feed::threadViewPost') ) {
+                $self->_dump_post( $depth++,   $post->post );
+                $self->_dump_post( $depth + 2, $_->post ) for @{ $post->replies };
+                return;
+            }
+
+            #~ warn ref $post;
+            #~ use Data::Dump;
+            #~ ddx $post->_raw;
+            # TODO: Support image embeds as raw links
+            $self->say(
+                '%s%s%s%s%s (%s)',
+                ' ' x ( $depth * 4 ),
+                color('red'), $post->author->handle->_raw,
+                color('reset'),
+                defined $post->author->displayName ? ' [' . $post->author->displayName . ']' : '',
+                $post->record->createdAt->_raw
+            );
+            if ( $post->embed && defined $post->embed->_raw->{images} ) {    # TODO: Check $post->embed->$type to match 'app.bsky.embed.images#view'
+                $self->say( '%s%s', ' ' x ( $depth * 4 ), $_->{fullsize} ) for @{ $post->embed->_raw->{images} };
+            }
+            $self->say( '%s%s', ' ' x ( $depth * 4 ), $post->record->text );
+            $self->say(
+                '%s 👍(%d) ⚡(%d) 🔄(%d) %s',
+                ' ' x ( $depth * 4 ),
+                $post->likeCount, $post->replyCount, $post->repostCount, $post->uri->as_string
+            );
+            $self->say( '%s', ' ' x ( $depth * 4 ) );
+        }
+
         method cmd_timeline (@args) {
             GetOptionsFromArray( \@args, 'json!' => \my $json );
 
@@ -214,31 +261,7 @@ package App::bsky 0.02 {
                 $self->say( JSON::Tiny::to_json( $_->_raw ) ) for @{ $tl->{feed} };
             }
             else {    # TODO: filter where $type ne 'app.bsky.feed.post'
-
-                sub _dump_post ( $self, $depth, $post ) {
-
-                    #~ use Data::Dump;
-                    #~ ddx $post->_raw;
-                    # TODO: Support image embeds as raw links
-                    $self->say(
-                        '%s%s%s%s%s (%s)',
-                        ' ' x ( $depth * 4 ),
-                        color('red'), $post->author->handle->_raw,
-                        color('reset'),
-                        defined $post->author->displayName ? ' [' . $post->author->displayName . ']' : '',
-                        $post->record->createdAt->_raw
-                    );
-                    if ( $post->embed && defined $post->embed->_raw->{images} )
-                    {    # TODO: Check $post->embed->$type to match 'app.bsky.embed.images#view'
-                        $self->say( '%s%s', ' ' x ( $depth * 4 ), $_->{fullsize} ) for @{ $post->embed->_raw->{images} };
-                    }
-                    $self->say( '%s%s',                 ' ' x ( $depth * 4 ), $post->record->text );
-                    $self->say( '%s 👍(%d) ⚡(%d) 🔄(%d)', ' ' x ( $depth * 4 ), $post->likeCount, $post->replyCount, $post->repostCount );
-                    $self->say( '%s',                   ' ' x ( $depth * 4 ) );
-                }
                 for my $post ( @{ $tl->{feed} } ) {
-
-                    #~ ddx $post->_raw;
                     my $depth = 0;
                     if ( $post->reply ) {
                         _dump_post( $self, $depth, $post->reply->parent );
@@ -257,8 +280,15 @@ package App::bsky 0.02 {
             return $self->err('Streaming client requires Mojo::UserAgent') unless $Mojo::UserAgent::VERSION;
         }
 
-        method cmd_thread () {
-            ...;
+        method cmd_thread (@args) {
+            GetOptionsFromArray( \@args, 'json!' => \my $json, 'n=i' => \my $number );
+            $number //= ();
+            my ($id) = @args;
+            $id // return $self->cmd_help('thread');
+            my $res = $bsky->feed_getPostThread( $id, $number, $number );    # $uri, depth, $parentHeight
+            return unless $res->{thread} && builtin::blessed $res->{thread};
+            return $self->say( JSON::Tiny::to_json $res->{thread}->_raw ) if $json;
+            $self->_dump_post( 0, $res->{thread} );
         }
 
         method cmd_post ($text) {
@@ -287,23 +317,17 @@ package App::bsky 0.02 {
         }
 
         method cmd_follow ($actor) {    # takes handle or did
-            my $profile = $bsky->actor_getProfile($actor);
-            builtin::blessed $profile or return $self->err( $profile->{message} );
-            my $res = $bsky->repo_createRecord(
-                repo       => $config->{session}{did},
-                collection => 'app.bsky.graph.follow',
-                record     => At::Lexicon::app::bsky::graph::follow->new( createdAt => time, subject => $profile->did )
-            );
-            $self->say( $res->{uri}->as_string );
+            my $res = $bsky->follow($actor);
+
+            # Sometimes, the backend hasn't caught up yet and actor_getProfile( ... ) has bad data
+            $self->say( $res->{viewer}{following} // 'okay' );
         }
 
         method cmd_unfollow ($actor) {    # takes handle or did
-            my $profile = $bsky->actor_getProfile($actor);
-            builtin::blessed $profile or return $self->err( $profile->{message} );
-            return 0 unless $profile->viewer->following;
-            my ($rkey) = $profile->viewer->following =~ m[app.bsky.graph.follow/(.*)$];
-            my $res = $bsky->repo_deleteRecord( repo => $config->{session}{did}, collection => 'app.bsky.graph.follow', rkey => $rkey );
-            $self->say( $profile->viewer->following );
+            my $res = $bsky->unfollow($actor);
+
+            # Sometimes, the backend hasn't caught up yet and actor_getProfile( ... ) has bad data
+            $self->say( $res->{viewer}{following} // 'okay' );
         }
 
         method cmd_follows (@args) {
@@ -359,12 +383,12 @@ package App::bsky 0.02 {
 
         method cmd_block ($actor) {    # takes handle or did
             my $res = $bsky->block($actor);
-            builtin::blessed $res ? $self->say( $res->viewer->blocking ) : 0;
+            builtin::blessed $res ? $self->say( $res->{viewer}{blocking} ) : 0;
         }
 
         method cmd_unblock ($actor) {    # takes handle or did
             my $res = $bsky->unblock($actor);
-            defined $res ? $self->say( $res->viewer->blocking ) : 0;
+            defined $res ? $self->say( $res->{viewer}{blocking} ) : 0;
         }
 
         method cmd_blocks (@args) {

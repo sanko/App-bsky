@@ -20,13 +20,11 @@ $ bsky post ...
 
 `bsky` is a simple command line client for Bluesky in Perl.
 
-# Usage
+# Commands
 
 ```
 bsky [global options] command [command options] [arguments...]
 ```
-
-# Commands
 
 ## config
 
@@ -128,13 +126,26 @@ Display posts from timeline.
 
 ## thread
 
-Show thread.
+```
+thread at://did:plc:qdvyf5jhuxqx667ay7k7nagl/app.bsky.feed.post/3kju327qezs2n
+```
 
-TODO
+Show a thread.
+
+### Options
+
+```
+--json      boolean flag; content is printed as JSON objects if given
+-n   value  number of items
+```
 
 ## post
 
-post new text
+```
+post "This is a test"
+```
+
+Create a new post.
 
 ## vote
 

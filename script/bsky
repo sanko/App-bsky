@@ -29,11 +29,9 @@ bsky - A Command-line Bluesky Client
 
 C<bsky> is a simple command line client for Bluesky in Perl.
 
-=head1 Usage
+=head1 Commands
 
    bsky [global options] command [command options] [arguments...]
-
-=head1 Commands
 
 =head2 config
 
@@ -115,13 +113,20 @@ Display posts from timeline.
 
 =head2 thread
 
-Show thread.
+    thread at://did:plc:qdvyf5jhuxqx667ay7k7nagl/app.bsky.feed.post/3kju327qezs2n
 
-TODO
+Show a thread.
+
+=head3 Options
+
+    --json      boolean flag; content is printed as JSON objects if given
+    -n   value  number of items
 
 =head2 post
 
-post new text
+    post "This is a test"
+
+Create a new post.
 
 =head2 vote
 

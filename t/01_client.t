@@ -14,20 +14,19 @@ subtest 'internal say/err' => sub {
     my ( $stdout, $stderr, $count ) = Capture::Tiny::capture(
         sub {
             $client->run(qw[config wrap 10]);
-            $client->say( 'X' x 50 );
-            $client->run(qw[config wrap 0]);
+            $client->say( 'XXXXX YYY A ' x 10 );
             $client->err( 'Y' x 50 );
         }
     );
-    like $stdout, qr[^X{9}$]m,  'say wraps';
-    like $stderr, qr[^Y{50}$]m, 'err wraps';
+    like $stdout, qr[^A XXXXX$]m, 'wraps';
+    like $stderr, qr[^Y{50}$]m,   'does not wrap without whitespace';
     ( $stdout, $stderr, $count ) = Capture::Tiny::capture(
         sub {
             $client->run(qw[config wrap 10]);
             $client->say("    Indent\nTry");
         }
     );
-    like $stdout, qr[^    Try$]m, 'say indents';
+    like $stdout, qr[^    Try$]m, 'indents';
 };
 my ( @err, @say );
 my $mock = mock 'App::bsky::CLI' => (
@@ -67,14 +66,16 @@ my $mock = mock 'App::bsky::CLI' => (
 sub client { CORE::state $client //= App::bsky::CLI->new( config_file => $tmp ); $client; }
 isa_ok client(), ['App::bsky::CLI'];
 #
-ok !client->run(),                   '(no params)';
-ok !client->run('fdsaf'),            'fdsaf';
-ok client->run('-V'),                '-V';
-ok client->run('--version'),         '--version';
-ok client->run('-h'),                '-h';
-ok client->run('config'),            'config';
-ok !client->run(qw[config fake]),    'config fake';
-ok client->run(qw[config wrap 100]), 'config wrap 100';
+ok !client->run(),                     '(no params)';
+ok !client->run('fdsaf'),              'fdsaf';
+ok client->run('-V'),                  '-V';
+ok client->run('--version'),           '--version';
+ok client->run('-h'),                  '-h';
+ok client->run('help'),                'help';
+ok client->run(qw[help show-profile]), 'config show-profile';
+ok client->run('config'),              'config';
+ok !client->run(qw[config fake]),      'config fake';
+ok client->run(qw[config wrap 100]),   'config wrap 100';
 is is_say { client->run(qw[config wrap]) }, 100, 'config wrap == 100';
 ok client->run(qw[config wrap 0]), 'config wrap 0';
 is is_say { client->run(qw[config wrap]) }, 0, 'config wrap == 0';
@@ -156,6 +157,10 @@ subtest 'live' => sub {
             sleep 1;    # sometimes the service has to catch up
             ok client->run( 'delete', $uri ), 'delete at://...';
         };
+        like is_say { client->run(qw[thread at://did:plc:qdvyf5jhuxqx667ay7k7nagl/app.bsky.feed.post/3kju327qezs2n]) },
+            qr[did:plc:qvzn322kmcvd7xtnips5xaun], 'thread at://...';
+        like is_say { client->run(qw[thread at://did:plc:qdvyf5jhuxqx667ay7k7nagl/app.bsky.feed.post/3kju327qezs2n --json]) }, qr[^{],
+            'thread --json at://...';
         like is_say { client->run(qw[notifications]) },        qr[did:plc:pwqewimhd3rxc4hg6ztwrcyj], 'notifications';
         like is_say { client->run(qw[notifications --json]) }, qr[^{],                               'notifications --json';
         like is_say { client->run(qw[show-session]) },         qr[did:plc:pwqewimhd3rxc4hg6ztwrcyj], 'show-session';
@@ -171,5 +176,17 @@ __END__
 =head1 NAME
 
 App::bsky::t - Test
+
+=head1 Commands
+
+Test.
+
+=head2 login
+
+Here we go.
+
+=head2 show-profile
+
+Here we go again.
 
 =cut

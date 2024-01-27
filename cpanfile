@@ -1,12 +1,11 @@
 requires 'perl', '5.038000';    # class syntax
-requires 'At',   '0.13';
+requires 'At',   '0.14';
 requires 'Getopt::Long';
 requires 'Pod::Text::Color';
 requires 'Path::Tiny';
 requires 'File::HomeDir';
 requires 'JSON::Tiny';
 requires 'Term::ANSIColor';
-requires 'Text::Wrap';
 on 'test' => sub {
     requires 'Test2::V0';        # core as of 5.39.x
     requires 'Capture::Tiny';    # check wrap in say/err
