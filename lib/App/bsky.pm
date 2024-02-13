@@ -1,4 +1,4 @@
-package App::bsky 0.03 {
+package App::bsky 0.04 {
     use v5.38;
     use utf8;
     use Bluesky;

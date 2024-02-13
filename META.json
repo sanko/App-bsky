@@ -88,7 +88,7 @@
          "web" : "https://github.com/sanko/App-bsky"
       }
    },
-   "version" : "0.03",
+   "version" : "0.04",
    "x_authority" : "cpan:SANKO",
    "x_serialization_backend" : "JSON::PP version 4.16",
    "x_static_install" : 1
