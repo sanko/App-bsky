@@ -2,6 +2,8 @@ Revision history for Perl extension App-bsky
 
 {{$NEXT}}
 
+    - Update to fit current API of At.pm
+
 0.03 2024-01-27T23:46:20Z
 
     - Commands for app passwords, likes, reposts, invite codes, threads, etc.
