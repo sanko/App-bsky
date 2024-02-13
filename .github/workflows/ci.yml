@@ -7,6 +7,7 @@ on:
         branches: '*'
     schedule:
         - cron: '42 5 * * 0'
+    workflow_dispatch: ~
 
 jobs:
   build:
