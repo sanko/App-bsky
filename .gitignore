@@ -6,9 +6,8 @@
 /Makefile
 /pm_to_blib
 
-/carton.lock
-/.carton/
 /local/
+.vs*
 
 nytprof.out
 nytprof/
@@ -18,9 +17,6 @@ cover_db/
 *.bak
 *.old
 *~
-*.swp
-*.o
-*.obj
 
 !LICENSE
 
@@ -28,9 +24,16 @@ cover_db/
 
 MYMETA.*
 
-/.tidyall.d
-
 /App-bsky-*
-script/bsky.pl
-/t/temp.bsky
-/script/temp.bsky
+
+.tidyall.d/
+*.gz
+*.zip
+temp/
+t/dev/
+
+eg/*.pl
+eg/lib/*.pm
+
+*.session
+

@@ -4,13 +4,15 @@
    "author" : [
       "Sanko Robinson <sanko@cpan.org>"
    ],
+   "description" : "Bluesky Client in Perl",
    "dynamic_config" : 0,
-   "generated_by" : "Minilla/v3.1.23, CPAN::Meta::Converter version 2.150010",
+   "generated_by" : "App::mii v2.0.0",
+   "keywords" : [],
    "license" : [
       "artistic_2"
    ],
    "meta-spec" : {
-      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "url" : "https://metacpan.org/pod/CPAN::Meta::Spec",
       "version" : 2
    },
    "name" : "App-bsky",
@@ -76,20 +78,38 @@
          }
       }
    },
-   "release_status" : "unstable",
+   "provides" : {
+      "App::bsky" : {
+         "file" : "lib/App/bsky.pm",
+         "version" : "0.04"
+      },
+      "App::bsky::CLI" : {
+         "file" : "lib/App/bsky.pm"
+      }
+   },
+   "release_status" : "stable",
    "resources" : {
       "bugtracker" : {
          "web" : "https://github.com/sanko/App-bsky/issues"
       },
       "homepage" : "https://github.com/sanko/App-bsky",
+      "license" : [
+         "http://www.perlfoundation.org/artistic_license_2_0"
+      ],
       "repository" : {
          "type" : "git",
          "url" : "https://github.com/sanko/App-bsky.git",
          "web" : "https://github.com/sanko/App-bsky"
       }
    },
-   "version" : "0.04",
+   "version" : "v1.0.0",
    "x_authority" : "cpan:SANKO",
+   "x_ignore" : [
+      "github",
+      ".gitignore",
+      ".tidyallrc"
+   ],
+   "x_readme_from" : "script/bsky",
    "x_serialization_backend" : "JSON::PP version 4.16",
    "x_static_install" : 1
 }

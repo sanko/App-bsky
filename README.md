@@ -1,11 +1,10 @@
-[![Actions Status](https://github.com/sanko/App-bsky/actions/workflows/ci.yml/badge.svg)](https://github.com/sanko/App-bsky/actions) [![MetaCPAN Release](https://badge.fury.io/pl/App-bsky.svg)](https://metacpan.org/release/App-bsky)
 # NAME
 
 bsky - A Command-line Bluesky Client
 
 # SYNOPSIS
 
-```perl
+```
 # create user session
 $ bsky login [handle] [password]
 
@@ -62,7 +61,7 @@ Show profile.
 
 ### Options
 
-```perl
+```
 --handle handle     user handle; defaults to the logged in account
 -H handle           alternative to --handle
 --json              boolean flag; content is printed as JSON objects if given
@@ -215,7 +214,7 @@ Follow the handle
 
 ### Options
 
-```perl
+```
 handle          user handle or DID
 ```
 
@@ -233,7 +232,7 @@ Unfollow the handle
 
 ### Options
 
-```perl
+```
 handle          user handle or DID
 ```
 
@@ -251,7 +250,7 @@ Show follows.
 
 ### Options
 
-```perl
+```
 --handle handle     user handle; defaults to the logged in account
 -H handle           alternative to --handle
 --json              boolean flag; content is printed as JSON objects if given
@@ -271,7 +270,7 @@ Show followers.
 
 ### Options
 
-```perl
+```
 --handle handle     user handle; defaults to the logged in account
 -H handle           alternative to --handle
 --json              boolean flag; content is printed as JSON objects if given
@@ -291,7 +290,7 @@ Block the handle.
 
 ### Options
 
-```perl
+```
 handle          user handle or DID
 ```
 
@@ -309,7 +308,7 @@ Unblock the handle.
 
 ### Options
 
-```perl
+```
 handle          user handle or DID
 ```
 
