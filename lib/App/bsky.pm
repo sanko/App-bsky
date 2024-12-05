@@ -14,20 +14,25 @@ package App::bsky 0.04 {
         use Getopt::Long qw[GetOptionsFromArray];
         use Term::ANSIColor;
         #
-        field $bsky;
+        field $bsky = Bluesky->new();
         field $config;
         field $config_file : param //= path( File::HomeDir->my_data )->absolute->child('.bsky');
         #
         ADJUST {
-            $config_file = path($config_file) unless builtin::blessed $config_file;
-            $self->config;
-            if ( defined $config->{session}{accessJwt} ) {    # Check if the tokens are expired...
-                $bsky = Bluesky->resume( %{ $config->{session} } );
-                $config->{session} = $bsky->session;
-                $self->put_config;
-                return if defined $config->{session}{accessJwt};
-            }
-            $bsky = Bluesky->new();
+            my $auth = decode_json $config_file->slurp_utf8;
+            ( defined $auth->{resume}{accessJwt} &&
+                    defined $auth->{resume}{refreshJwt} &&
+                    $bsky->resume( $auth->{resume}{accessJwt}, $auth->{resume}{refreshJwt} ) ) ||
+                (
+                $bsky->login( $auth->{login}{identifier}, $auth->{login}{password} ) &&
+                $config_file->spew_utf8(
+                    encode_json {
+                        login  => { identifier => $auth->{login}{identifier},  password   => $auth->{login}{password} },
+                        resume => { accessJwt  => $bsky->session->{accessJwt}, refreshJwt => $bsky->session->{refreshJwt} }
+                    }
+                )
+                );
+            $config->{session} = $bsky->session;
         }
 
         method config() {
@@ -52,14 +57,15 @@ package App::bsky 0.04 {
             my $size        = $width - $indent;
             my $indentation = ' ' x $indent;
             $string =~ s[(.{1,$size})(\s+|$)][$1\n]g if $size > 0;
-            $string =~ s[^\s+|\n(\s+)][$1//'']gme;                   # Preserve leading whitespace
+
+            #~ $string =~ s[^\s+|\n(\s+)][$1//'']gme;                   # Preserve leading whitespace
             $string =~ s/^/$indentation/gm;
             return $string;
         }
 
         method err ( $msg, $fatal //= 0 ) {
             my $indent = $msg =~ /^(\s*)/ ? $1 : '';
-            $msg = _wrap_and_indent( $config->{settings}{wrap}, length $indent, $msg ) if length $msg;
+            $msg = _wrap_and_indent( $config->{settings}{wrap} // 0, length $indent, $msg ) if length $msg;
             die "$msg\n" if $fatal;
             warn "$msg\n";
             !$fatal;
@@ -68,7 +74,7 @@ package App::bsky 0.04 {
         method say ( $msg, @etc ) {
             $msg = @etc ? sprintf $msg, @etc : $msg;
             my $indent = $msg =~ /^(\s*)/ ? $1 : '';
-            $msg = _wrap_and_indent( $config->{settings}{wrap}, length $indent, $msg ) if length $msg;
+            $msg = _wrap_and_indent( $config->{settings}{wrap} // 0, length $indent, $msg ) if length $msg;
             CORE::say $msg;
             1;
         }
@@ -93,22 +99,23 @@ package App::bsky 0.04 {
         method cmd_showprofile (@args) {
             GetOptionsFromArray( \@args, 'json!' => \my $json, 'handle|H=s' => \my $handle );
             return $self->cmd_help('show-profile') if scalar @args;
-            my $profile = $bsky->actor_getProfile( $handle // $config->{session}{handle} );
+            my $profile = $bsky->getProfile( $handle // $config->{session}{handle} );
             if ($json) {
                 $self->say( JSON::Tiny::to_json( $profile->_raw ) );
             }
             else {
-                $self->say( 'DID: %s',         $profile->did->_raw );
-                $self->say( 'Handle: %s',      $profile->handle->_raw );
-                $self->say( 'DisplayName: %s', $profile->displayName // '' );
-                $self->say( 'Description: %s', $profile->description // '' );
-                $self->say( 'Follows: %d',     $profile->followsCount );
-                $self->say( 'Followers: %d',   $profile->followersCount );
-                $self->say( 'Avatar: %s',      $profile->avatar ) if $profile->avatar;
-                $self->say( 'Banner: %s',      $profile->banner ) if $profile->banner;
-                $self->say('Blocks you: yes') if $profile->viewer->blockedBy // ();
-                $self->say('Following: yes')  if $profile->viewer->following // ();
-                $self->say('Muted: yes')      if $profile->viewer->muted     // ();
+                $profile->throw unless $profile;
+                $self->say( 'DID: %s',         $profile->{did} );
+                $self->say( 'Handle: %s',      $profile->{handle} );
+                $self->say( 'DisplayName: %s', $profile->{displayName} // '' );
+                $self->say( 'Description: %s', $profile->{description} // '' );
+                $self->say( 'Follows: %d',     $profile->{followsCount} );
+                $self->say( 'Followers: %d',   $profile->{followersCount} );
+                $self->say( 'Avatar: %s',      $profile->{avatar} ) if $profile->{avatar};
+                $self->say( 'Banner: %s',      $profile->{banner} ) if $profile->{banner};
+                $self->say('Blocks you: yes') if $profile->{viewer}->{blockedBy} // ();
+                $self->say('Following: yes')  if $profile->{viewer}->{following} // ();
+                $self->say('Muted: yes')      if $profile->{viewer}->{muted}     // ();
             }
             1;
         }
@@ -580,7 +587,7 @@ package App::bsky 0.04 {
             open my $fh, '>', \my $out;
             if ( !defined $command ) {
                 use Pod::Text::Color;
-                Pod::Text::Color->new->parse_from_file( $0, $fh );
+                Pod::Text::Color->new->parse_from_file( path($0)->absolute->stringify, $fh );
             }
             else {
                 BEGIN { $Pod::Usage::Formatter = 'Pod::Text::Color'; }
@@ -588,9 +595,9 @@ package App::bsky 0.04 {
                 $command = 'timeline'      if $command eq 'tl';
                 $command = 'notifications' if $command eq 'notif';
                 pod2usage( -output => $fh, -verbose => 99, -sections => [ 'Usage', 'Commands/' . $command ], -exitval => 'noexit' );
+                $out =~ s[^[ ]{6}][    ]mg;
+                $out =~ s[\s+$][]gs;
             }
-            $out =~ s[^[ ]{6}][    ]mg;
-            $out =~ s[\s+$][]gs;
             return $self->say($out);
         }
 

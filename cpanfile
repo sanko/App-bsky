@@ -1,4 +1,4 @@
-requires 'At', '0.17';
+requires 'Bluesky', '0.19';
 requires 'File::HomeDir';
 requires 'Getopt::Long';
 requires 'JSON::Tiny';
