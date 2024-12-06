@@ -19,25 +19,27 @@ package App::bsky 0.04 {
         field $config_file : param //= path( File::HomeDir->my_data )->absolute->child('.bsky');
         #
         ADJUST {
-            my $auth = decode_json $config_file->slurp_utf8;
-            ( defined $auth->{resume}{accessJwt} &&
-                    defined $auth->{resume}{refreshJwt} &&
-                    $bsky->resume( $auth->{resume}{accessJwt}, $auth->{resume}{refreshJwt} ) ) ||
+            `chcp 65001` if $^O eq 'MSWin32';
+            $self->get_config;
+            ( defined $config->{resume}{accessJwt} &&
+                    defined $config->{resume}{refreshJwt} &&
+                    $bsky->resume( $config->{resume}{accessJwt}, $config->{resume}{refreshJwt} ) ) ||
                 (
-                $bsky->login( $auth->{login}{identifier}, $auth->{login}{password} ) &&
+                $bsky->login( $config->{login}{identifier}, $config->{login}{password} ) &&
                 $config_file->spew_utf8(
                     encode_json {
-                        login  => { identifier => $auth->{login}{identifier},  password   => $auth->{login}{password} },
-                        resume => { accessJwt  => $bsky->session->{accessJwt}, refreshJwt => $bsky->session->{refreshJwt} }
+                        login  => { identifier => $config->{login}{identifier}, password   => $config->{login}{password} },
+                        resume => { accessJwt  => $bsky->session->{accessJwt},  refreshJwt => $bsky->session->{refreshJwt} }
                     }
                 )
                 );
             $config->{session} = $bsky->session;
+            $config->{settings} //= { wrap => 0 };
+            $self->put_config;
         }
 
         method config() {
             $self->get_config if !$config && $config_file->is_file && $config_file->size;
-            $config->{settings} //= { wrap => 0 };
             $config;
         }
 
@@ -75,7 +77,7 @@ package App::bsky 0.04 {
             $msg = @etc ? sprintf $msg, @etc : $msg;
             my $indent = $msg =~ /^(\s*)/ ? $1 : '';
             $msg = _wrap_and_indent( $config->{settings}{wrap} // 0, length $indent, $msg ) if length $msg;
-            CORE::say $msg;
+            say $msg;
             1;
         }
 
@@ -113,9 +115,9 @@ package App::bsky 0.04 {
                 $self->say( 'Followers: %d',   $profile->{followersCount} );
                 $self->say( 'Avatar: %s',      $profile->{avatar} ) if $profile->{avatar};
                 $self->say( 'Banner: %s',      $profile->{banner} ) if $profile->{banner};
-                $self->say('Blocks you: yes') if $profile->{viewer}->{blockedBy} // ();
-                $self->say('Following: yes')  if $profile->{viewer}->{following} // ();
-                $self->say('Muted: yes')      if $profile->{viewer}->{muted}     // ();
+                $self->say('Blocks you: yes') if $profile->{viewer}{blockedBy} // ();
+                $self->say('Following: yes')  if $profile->{viewer}{following} // ();
+                $self->say('Muted: yes')      if $profile->{viewer}{muted}     // ();
             }
             1;
         }
@@ -202,36 +204,38 @@ package App::bsky 0.04 {
 
         method cmd_showsession (@args) {
             GetOptionsFromArray( \@args, 'json!' => \my $json );
-            my $session = $bsky->server_getSession;
+            my $session = $bsky->session;
             if ($json) {
                 $self->say(
                     JSON::Tiny::to_json(
-                        {   did            => $session->{did}->_raw,
+                        {   did            => $session->{did},
                             email          => $session->{email},
                             emailConfirmed => \!!$session->{emailConfirmed},
-                            handle         => $session->{handle}->_raw
+                            handle         => $session->{handle}
                         }
                     )
                 );
             }
             else {
-                $self->say( 'DID: ' . $session->{did}->_raw );
+                $self->say( 'DID: ' . $session->{did} );
                 $self->say( 'Email: ' . $session->{email} );
-                $self->say( 'Handle: ' . $session->{handle}->_raw );
+                $self->say( 'Handle: ' . $session->{handle} );
             }
             return 1;
         }
 
         method _dump_post ( $depth, $post ) {
-            if ( $post->isa('At::Lexicon::app::bsky::feed::threadViewPost') && builtin::blessed $post->parent ) {
-                $self->_dump_post( $depth++, $post->parent );
-                $post = $post->post;
-            }
-            elsif ( $post->isa('At::Lexicon::app::bsky::feed::threadViewPost') ) {
-                $self->_dump_post( $depth++, $post->post );
-                my $replies = $post->replies // [];
-                $self->_dump_post( $depth + 2, $_->post ) for @$replies;
-                return;
+            if ( builtin::blessed $post ) {
+                if ( $post->isa('At::Lexicon::app::bsky::feed::threadViewPost') && builtin::blessed $post->parent ) {
+                    $self->_dump_post( $depth++, $post->parent );
+                    $post = $post->post;
+                }
+                elsif ( $post->isa('At::Lexicon::app::bsky::feed::threadViewPost') ) {
+                    $self->_dump_post( $depth++, $post->post );
+                    my $replies = $post->replies // [];
+                    $self->_dump_post( $depth + 2, $_->post ) for @$replies;
+                    return;
+                }
             }
 
             #~ warn ref $post;
@@ -241,19 +245,18 @@ package App::bsky 0.04 {
             $self->say(
                 '%s%s%s%s%s (%s)',
                 ' ' x ( $depth * 4 ),
-                color('red'), $post->author->handle->_raw,
+                color('red'), $post->{author}{handle},
                 color('reset'),
-                defined $post->author->displayName ? ' [' . $post->author->displayName . ']' : '',
-                $post->record->createdAt->_raw
+                defined $post->{author}{displayName} ? ' [' . $post->{author}{displayName} . ']' : '',
+                $post->{record}{createdAt}
             );
-            if ( $post->embed && defined $post->embed->_raw->{images} ) {    # TODO: Check $post->embed->$type to match 'app.bsky.embed.images#view'
-                $self->say( '%s%s', ' ' x ( $depth * 4 ), $_->{fullsize} ) for @{ $post->embed->_raw->{images} };
+            if ( $post->{embed} && defined $post->{embed}{images} ) {    # TODO: Check $post->embed->$type to match 'app.bsky.embed.images#view'
+                $self->say( '%s%s', ' ' x ( $depth * 4 ), $_->{fullsize} ) for @{ $post->{embed}{images} };
             }
-            $self->say( '%s%s', ' ' x ( $depth * 4 ), $post->record->text );
+            $self->say( '%s%s', ' ' x ( $depth * 4 ), $post->{record}{text} );
             $self->say(
-                '%s 👍(%d) ⚡(%d) 🔄(%d) %s',
-                ' ' x ( $depth * 4 ),
-                $post->likeCount, $post->replyCount, $post->repostCount, $post->uri->as_string
+                '%s 👍(%d) ⚡(%d) 🔄(%d) %s', ' ' x ( $depth * 4 ), $post->{likeCount}, $post->{replyCount},
+                $post->{repostCount},      $post->{uri}->as_string
             );
             $self->say( '%s', ' ' x ( $depth * 4 ) );
         }
@@ -262,20 +265,20 @@ package App::bsky 0.04 {
             GetOptionsFromArray( \@args, 'json!' => \my $json );
 
             #~ use Data::Dump;
-            my $tl = $bsky->feed_getTimeline();
+            my $tl = $bsky->getTimeline();
 
             #$algorithm //= (), $limit //= (), $cursor //= ()
             if ($json) {
-                $self->say( JSON::Tiny::to_json [ map { $_->_raw } @{ $tl->{feed} } ] );
+                $self->say( JSON::Tiny::to_json [ map {$_} @{ $tl->{feed} } ] );
             }
             else {    # TODO: filter where $type ne 'app.bsky.feed.post'
                 for my $post ( @{ $tl->{feed} } ) {
                     my $depth = 0;
-                    if ( $post->reply ) {
-                        _dump_post( $self, $depth, $post->reply->parent );
+                    if ( $post->{reply} ) {
+                        _dump_post( $self, $depth, $post->{reply}{parent} );
                         $depth = 1;
                     }
-                    _dump_post( $self, $depth, $post->post );
+                    _dump_post( $self, $depth, $post->{post} );
                 }
             }
             scalar @{ $tl->{feed} };
@@ -616,7 +619,7 @@ package App::bsky 0.04 {
         }
 
         method cmd_version() {
-            $self->say($_) for 'bsky  v' . $App::bsky::VERSION, 'At.pm v' . $At::VERSION, 'perl  ' . $^V;
+            $self->say($_) for 'bsky  v' . $App::bsky::VERSION, 'Bluesky.pm v' . $Bluesky::VERSION, 'perl  ' . $^V;
             1;
         }
     }
