@@ -19,7 +19,11 @@ package App::bsky 0.04 {
         field $config_file : param //= path( File::HomeDir->my_data )->absolute->child('.bsky');
         #
         ADJUST {
-            `chcp 65001` if $^O eq 'MSWin32';
+            if ( $^O eq 'MSWin32' ) {
+                require Win32::Console;
+                Win32::Console::OutputCP(65000);
+                binmode STDOUT, ':encoding(cp65000)';
+            }
             $self->get_config;
             ( defined $config->{resume}{accessJwt} &&
                     defined $config->{resume}{refreshJwt} &&
@@ -652,6 +656,8 @@ App::bsky is a command line client for the At protocol backed Bluesky social net
 =head1 See Also
 
 L<At>.pm
+
+L<Bluesky>.pm
 
 L<https://github.com/mattn/bsky> - Original Golang client
 

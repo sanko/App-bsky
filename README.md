@@ -456,6 +456,8 @@ Current configuration values include:
 
 [At](https://metacpan.org/pod/At).pm
 
+[Bluesky](https://metacpan.org/pod/Bluesky).pm
+
 [https://github.com/mattn/bsky](https://github.com/mattn/bsky) - Original Golang client
 
 # LICENSE
