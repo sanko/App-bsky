@@ -307,8 +307,8 @@ package App::bsky 0.04 {
         }
 
         method cmd_post ($text) {
-            my $res = $bsky->post( text => $text );
-            defined $res->{uri} ? $self->say( $res->{uri} ) : 0;
+            my $res = $bsky->createPost( text => $text );
+            defined $res ? $self->say( $res->{uri} ) : 0;
         }
 
         method cmd_delete ($rkey) {
