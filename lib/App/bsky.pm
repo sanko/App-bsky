@@ -529,18 +529,6 @@ package App::bsky 0.04 {
             $self->cmd_notifications(@args);
         }
 
-        method cmd_invitecodes (@args) {
-            GetOptionsFromArray( \@args, 'json!' => \my $json, 'used!' => \my $used );
-            my $res = $bsky->server_getAccountInviteCodes($used);
-            if ($json) {
-                $self->say( JSON::Tiny::to_json [ map { $_->_raw } @{ $res->{codes} } ] );
-            }
-            else {
-                $self->say( $_->code . ( $_->available ? '' : ' [unavailable]' ) . ( $_->disabled ? ' [disabled]' : '' ) ) for @{ $res->{codes} };
-            }
-            scalar @{ $res->{codes} };
-        }
-
         method cmd_listapppasswords (@args) {
             GetOptionsFromArray( \@args, 'json!' => \my $json );
             my $passwords = $bsky->server_listAppPasswords;
