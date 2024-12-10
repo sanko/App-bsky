@@ -531,13 +531,17 @@ package App::bsky 0.04 {
 
         method cmd_listapppasswords (@args) {
             GetOptionsFromArray( \@args, 'json!' => \my $json );
-            my $passwords = $bsky->server_listAppPasswords;
+            my $passwords = $bsky->at->get('com.atproto.server.listAppPasswords');
+            $passwords || $passwords->throw;
             my @passwords = @{ $passwords->{passwords} };
             if ($json) {
-                $self->say( JSON::Tiny::to_json [ map { $_->_raw } @passwords ] );
+                $self->say( JSON::Tiny::to_json [ map {$_} @passwords ] );
+            }
+            elsif (@passwords) {
+                $self->say( '%s%s (%s)', $_->{privileged} ? '*' : ' ', $_->{name}, $_->{createdAt} ) for @passwords;
             }
             else {
-                $self->say( '%s (%s)', $_->name, $_->createdAt->_raw ) for @passwords;
+                $self->say('No app passwords found');
             }
             scalar @passwords;
         }
