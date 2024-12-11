@@ -490,39 +490,40 @@ package App::bsky 0.04 {
 
         method cmd_notifications (@args) {
             GetOptionsFromArray( \@args, 'all|a' => \my $all, 'json!' => \my $json );
+            if ( !$all ) {
+                my $notification_count = $bsky->at->get('app.bsky.notification.getUnreadCount');
+                $notification_count || $notification_count->throw;
+                return $self->say( $json ? '[]' : 'No unread notifications' ) unless $notification_count->{count};
+            }
             my @notes;
             my $cursor = ();
             do {
-                my $notes = $bsky->notification_listNotifications( limit => 100, cursor => $cursor );
-                if ( defined $notes->{notifications} ) {
-                    push @notes, @{ $notes->{notifications} };
-                    $cursor = $all && $notes->{cursor} ? $notes->{cursor} : ();
-                }
+                my $notes = $bsky->at->get( 'app.bsky.notification.listNotifications', { limit => 100, cursor => $cursor } );
+                $notes || $notes->throw;
+                push @notes, @{ $notes->{notifications} };
+                $cursor = $all && $notes->{cursor} ? $notes->{cursor} : ();
             } while ($cursor);
-            if ($json) {
-                $self->say( JSON::Tiny::to_json [ map { $_->_raw } @notes ] );
+            return $self->say( JSON::Tiny::to_json [ map {$_} @notes ] ) if $json;
+            return $self->say('No notifications.') unless @notes;
+            for my $note (@notes) {
+                $self->say(
+                    '%s%s%s%s %s', color('red'), $note->{author}{handle},
+                    color('reset'),
+                    defined $note->{author}{displayName} ? ' [' . $note->{author}{displayName} . ']' : '',
+                    $note->{author}{did}
+                );
+                $self->say(
+                    '  %s',
+                    $note->reason eq 'like'        ? 'liked ' . $note->{record}{subject}{uri} :
+                        $note->reason eq 'repost'  ? 'reposted ' . $note->{record}{subject}{uri} :
+                        $note->reason eq 'follow'  ? 'followed you' :
+                        $note->reason eq 'mention' ? 'mentioned you at ' . $note->{record}{subject}{uri} :
+                        $note->reason eq 'reply'   ? 'replied at ' . $note->{record}{subject}{uri} :
+                        $note->reason eq 'quote'   ? 'quoted you at ' . $note->{record}{subject}{uri} :
+                        'unknown notification: ' . $note->{reason}
+                );
             }
-            else {
-                for my $note (@notes) {
-                    $self->say(
-                        '%s%s%s%s %s', color('red'), $note->author->handle->_raw,
-                        color('reset'),
-                        defined $note->author->displayName ? ' [' . $note->author->displayName . ']' : '',
-                        $note->author->did->_raw
-                    );
-                    $self->say(
-                        '  %s',
-                        $note->reason eq 'like'        ? 'liked ' . $note->record->{subject}{uri} :
-                            $note->reason eq 'repost'  ? 'reposted ' . $note->record->{subject}{uri} :
-                            $note->reason eq 'follow'  ? 'followed you' :
-                            $note->reason eq 'mention' ? 'mentioned you at ' . $note->record->{subject}{uri} :
-                            $note->reason eq 'reply'   ? 'replied at ' . $note->record->{subject}{uri} :
-                            $note->reason eq 'quote'   ? 'quoted you at ' . $note->record->{subject}{uri} :
-                            'unknown notification: ' . $note->reason
-                    );
-                }
-            }
-            return scalar @notes;
+            scalar @notes;
         }
 
         method cmd_notif (@args) {
