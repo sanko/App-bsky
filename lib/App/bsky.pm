@@ -416,26 +416,32 @@ package App::bsky 0.04 {
             my @followers;
             my $cursor = ();
             do {
-                my $followers = $bsky->graph_getFollowers( actor => $handle // $config->{session}{handle}, limit => 100, cursor => $cursor );
+                my $followers = $bsky->at->get( 'app.bsky.graph.getFollowers',
+                    { actor => $handle // $config->{session}{handle}, limit => 100, cursor => $cursor } );
+                $followers // last;
                 if ( defined $followers->{followers} ) {
                     push @followers, @{ $followers->{followers} };
                     $cursor = $followers->{cursor};
                 }
             } while ($cursor);
             if ($json) {
-                $self->say( JSON::Tiny::to_json [ map { $_->_raw } @followers ] );
+                $self->say( JSON::Tiny::to_json [ map {$_} @followers ] );
             }
             else {
+                my $len1 = my $len2 = 0;
+                for (@followers) {
+                    $len1 = length( $_->{handle} )      if length( $_->{handle} ) > $len1;
+                    $len2 = length( $_->{displayName} ) if length( $_->{displayName} ) > $len2;
+                }
                 for my $follower (@followers) {
                     $self->say(
-                        sprintf '%s%s%s%s %s%s%s',
-                        color('red'),   $follower->handle->_raw,
-                        color('reset'), defined $follower->displayName ? ' [' . $follower->displayName . ']' : '',
-                        color('blue'),  $follower->did->_raw, color('reset')
+                        sprintf '%s%-' . ($len1) . 's %s%-' . ($len2) . 's %s%s%s',
+                        color('red'),  $follower->{handle}, color('reset'), $follower->{displayName} // '',
+                        color('blue'), $follower->{did},    color('reset')
                     );
                 }
             }
-            return scalar @followers;
+            scalar @followers;
         }
 
         method cmd_block ($actor) {    # takes handle or did
