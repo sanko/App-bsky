@@ -315,10 +315,12 @@ package App::bsky 0.04 {
             $bsky->delete($rkey);
         }
 
-        method cmd_like ($uri) {    # can take the post uri
-            my $res = $bsky->like($uri);
-            $res // return;
-            $self->say( $res->{uri}->as_string );
+        # TODO
+        method cmd_like ( $uri, @args ) {    # can take the post uri
+            GetOptionsFromArray( \@args, 'json!' => \my $json, 'cid=s' => \my $cid );
+            my $res = $bsky->like( $uri, $cid );
+            $res || $res->throw;
+            $self->say( $json ? JSON::Tiny::to_json($res) : sprintf 'Liked! [id:%s]', $res->{uri}->as_string );
         }
 
         method cmd_unlike ($uri) {    # can take the post uri or the like uri
