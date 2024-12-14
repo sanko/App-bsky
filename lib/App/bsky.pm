@@ -259,8 +259,8 @@ package App::bsky 0.04 {
             }
             $self->say( '%s%s', ' ' x ( $depth * 4 ), $post->{record}{text} );
             $self->say(
-                '%s 👍(%d) ⚡(%d) 🔄(%d) %s', ' ' x ( $depth * 4 ), $post->{likeCount}, $post->{replyCount},
-                $post->{repostCount},      $post->{uri}->as_string
+                '%s ❤️ %d 💬 %d 🔄 %d %s', ' ' x ( $depth * 4 ), $post->{likeCount}, $post->{replyCount},
+                $post->{repostCount},    $post->{uri}->as_string
             );
             $self->say( '%s', ' ' x ( $depth * 4 ) );
         }
