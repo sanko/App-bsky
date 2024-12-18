@@ -244,7 +244,7 @@ package App::bsky 0.04 {
 
             #~ warn ref $post;
             #~ use Data::Dump;
-            #~ ddx $post->_raw;
+            #~ ddx $post;
             # TODO: Support image embeds as raw links
             $self->say(
                 '%s%s%s%s%s (%s)',
@@ -311,6 +311,7 @@ package App::bsky 0.04 {
             defined $res ? $self->say( $res->{uri} ) : 0;
         }
 
+        # TODO
         method cmd_delete ($rkey) {
             $bsky->delete($rkey);
         }
@@ -355,12 +356,14 @@ package App::bsky 0.04 {
             scalar @likes;
         }
 
+        # TODO
         method cmd_repost ($uri) {
             my $res = $bsky->repost($uri);
             $res // return;
             $self->say( $res->{uri}->as_string );
         }
 
+        # TODO
         method cmd_reposts ( $uri, @args ) {
             GetOptionsFromArray( \@args, 'json!' => \my $json );
             my @reposts;
@@ -380,6 +383,7 @@ package App::bsky 0.04 {
             scalar @reposts;
         }
 
+        # TODO
         method cmd_follow ($actor) {    # takes handle or did
             my $res = $bsky->follow($actor);
 
@@ -387,6 +391,7 @@ package App::bsky 0.04 {
             $self->say( $res->{viewer}{following} // 'okay' );
         }
 
+        # TODO
         method cmd_unfollow ($actor) {    # takes handle or did
             my $res = $bsky->unfollow($actor);
 
@@ -394,6 +399,7 @@ package App::bsky 0.04 {
             $self->say( $res->{viewer}{following} // 'okay' );
         }
 
+        # TODO
         method cmd_follows (@args) {
             GetOptionsFromArray( \@args, 'json!' => \my $json, 'handle|H=s' => \my $handle );
             my @follows;
@@ -451,16 +457,19 @@ package App::bsky 0.04 {
             scalar @followers;
         }
 
+        # TODO
         method cmd_block ($actor) {    # takes handle or did
             my $res = $bsky->block($actor);
             builtin::blessed $res ? $self->say( $res->{viewer}{blocking} ) : 0;
         }
 
+        # TODO
         method cmd_unblock ($actor) {    # takes handle or did
             my $res = $bsky->unblock($actor);
             defined $res ? $self->say( $res->{viewer}{blocking} ) : 0;
         }
 
+        # TODO
         method cmd_blocks (@args) {
             GetOptionsFromArray( \@args, 'json!' => \my $json );
             my @blocks;
