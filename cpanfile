@@ -1,4 +1,4 @@
-requires 'Bluesky', '0.19';
+requires 'Bluesky', '1.00';
 requires 'File::HomeDir';
 requires 'Getopt::Long';
 requires 'JSON::Tiny';
@@ -15,7 +15,6 @@ on test => sub {
 };
 on develop => sub {
     requires 'CPAN::Uploader';
-    requires 'Minilla';
     requires 'Pod::Markdown::Github';
     requires 'Software::License::Artistic_2_0';
     requires 'Test::CPAN::Meta';

@@ -48,7 +48,6 @@
          },
          "requires" : {
             "CPAN::Uploader" : "0",
-            "Minilla" : "0",
             "Pod::Markdown::Github" : "0",
             "Software::License::Artistic_2_0" : "0",
             "Test::CPAN::Meta" : "0",
@@ -61,7 +60,7 @@
       },
       "runtime" : {
          "requires" : {
-            "Bluesky" : "0.19",
+            "Bluesky" : "1.00",
             "File::HomeDir" : "0",
             "Getopt::Long" : "0",
             "JSON::Tiny" : "0",
@@ -81,7 +80,7 @@
    "provides" : {
       "App::bsky" : {
          "file" : "lib/App/bsky.pm",
-         "version" : "0.04"
+         "version" : "1.00"
       },
       "App::bsky::CLI" : {
          "file" : "lib/App/bsky.pm"
@@ -102,12 +101,17 @@
          "web" : "https://github.com/sanko/App-bsky"
       }
    },
-   "version" : "0.04",
+   "version" : "1.00",
    "x_authority" : "cpan:SANKO",
    "x_ignore" : [
-      "github",
+      ".tidyallrc",
       ".gitignore",
-      ".tidyallrc"
+      ".clang-format",
+      ".github/",
+      ".github/*",
+      ".gitmodules",
+      "eg/**",
+      ".github/**"
    ],
    "x_readme_from" : "script/bsky",
    "x_serialization_backend" : "JSON::PP version 4.16",

@@ -1,4 +1,3 @@
-use v5.38;
-use lib 'builder';
-use App::bsky::Builder;
-App::bsky::Builder->new->Build_PL();
+use v5.40;
+use Module::Build::Tiny;
+Build_PL();

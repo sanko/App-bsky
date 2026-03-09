@@ -5,14 +5,25 @@ bsky - A Command-line Bluesky Client
 # SYNOPSIS
 
 ```
-# create user session
-$ bsky login [handle] [password]
+bsky [global options] command [command options] [arguments...]
 
-# view recent posts
+# Modern OAuth Authentication (Recommended)
+$ bsky oauth user.bsky.social
+
+# Traditional Login
+$ bsky login user.bsky.social password
+
+$ bsky help
+
+# Ciew recent posts
 $ bsky timeline ...
 
-# create a post
+# Create a post
 $ bsky post ...
+
+# Chat & Messaging
+$ bsky chat
+$ bsky dm handle "message"
 ```
 
 # DESCRIPTION
@@ -52,7 +63,7 @@ value       optional
 ```
 bsky show-profile
 
-bsky show-profile --handle sankor.bsky.social
+bsky show-profile --handle sanko.bsky.social
 
 bsky show-profile --json
 ```
@@ -205,7 +216,7 @@ Show reposts of the post.
 ```
 bsky follow [handle]
 
-bsky follow sankor.bsky.social
+bsky follow sanko.bsky.social
 
 bsky follow did:plc:2lk3pbakx2erxgotvzyeuyem
 ```
@@ -223,7 +234,7 @@ handle          user handle or DID
 ```
 bsky unfollow [handle]
 
-bsky unfollow sankor.bsky.social
+bsky unfollow sanko.bsky.social
 
 bsky unfollow did:plc:2lk3pbakx2erxgotvzyeuyem
 ```
@@ -241,7 +252,7 @@ handle          user handle or DID
 ```
 bsky follows
 
-bsky follows --handle sankor.bsky.social
+bsky follows --handle sanko.bsky.social
 
 bsky follows --json
 ```
@@ -261,7 +272,7 @@ Show follows.
 ```
 bsky followers
 
-bsky followers --handle sankor.bsky.social
+bsky followers --handle sanko.bsky.social
 
 bsky followers --json
 ```
@@ -281,7 +292,7 @@ Show followers.
 ```
 bsky block [handle]
 
-bsky block sankor.bsky.social
+bsky block sanko.bsky.social
 
 bsky block did:plc:2lk3pbakx2erxgotvzyeuyem
 ```
@@ -299,7 +310,7 @@ handle          user handle or DID
 ```
 bsky unblock [handle]
 
-bsky unblock sankor.bsky.social
+bsky unblock sanko.bsky.social
 
 bsky unblock did:plc:2lk3pbakx2erxgotvzyeuyem
 ```
