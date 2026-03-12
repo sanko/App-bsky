@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.05] - 2026-03-12
 
 ### Added
 - Added `oauth` command for a streamlined, interactive authentication flow with an automatic local listener.
@@ -34,3 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - original version
+
+[Unreleased]: https://github.com/sanko/App-bsky/compare/0.05...HEAD
+[0.05]: https://github.com/sanko/App-bsky/compare/0.04...0.05
+[0.04]: https://github.com/sanko/App-bsky/compare/0.03...0.04
+[0.03]: https://github.com/sanko/App-bsky/compare/0.02...0.03
+[0.02]: https://github.com/sanko/App-bsky/compare/0.01...0.02
+[0.01]: https://github.com/sanko/App-bsky/releases/tag/0.01
