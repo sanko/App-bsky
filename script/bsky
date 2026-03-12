@@ -95,6 +95,16 @@ Update profile elements.
     --description   optional, blurb about yourself
     --name          optional, display name
 
+=head2 oauth
+
+    bsky oauth user.bsky.social
+
+Initiates an interactive OAuth 2.0 flow. This is the recommended way to authenticate.
+
+=head3 Options
+
+    --redirect      optional, redirect URI for OAuth callback
+
 =head2 show-session
 
     bsky show-session
@@ -106,6 +116,25 @@ Show current session.
 =head3 Options
 
     --json              boolean flag; content is printed as JSON objects if given
+
+=head2 chat
+
+    bsky chat
+
+Lists recent conversations and the last few messages in each.
+
+=head2 dm
+
+    bsky dm --handle user.bsky.social --text "Hello from the CLI!"
+
+Sends a direct message to a user.
+
+=head3 Options
+
+    --handle handle     user handle or DID
+    -H handle           alternative to --handle
+    --text message      message content
+    -m message          alternative to --text
 
 =head2 timeline
 
@@ -121,6 +150,12 @@ Display posts from timeline.
 =head3 Options
 
     --json      boolean flag; content is printed as JSON objects if given
+
+=head2 stream
+
+    bsky stream
+
+Stream posts from the firehose. Note that this requires L<Mojo::UserAgent> to be installed.
 
 =head2 thread
 
@@ -303,20 +338,6 @@ Show notifications.
     --all               boolean flag, show all notifications
     --json              boolean flag; content is printed as JSON objects if given
 
-=head2 invite-codes
-
-    bsky invite-codes
-
-    bsky invite-codes --json
-
-Show invite codes.
-
-Note that you must be logged in with the account password to view invite codes.
-
-=head3 Options
-
-    --json              boolean flag; content is printed as JSON objects if given
-
 =head2 add-app-password
 
     bsky add-app-password "Your app name"
@@ -389,20 +410,20 @@ L<Bluesky>.pm
 
 L<https://github.com/mattn/bsky> - Original Golang client
 
-=head1 LICENSE
-
-Copyright (C) Sanko Robinson.
-
-This library is free software; you can redistribute it and/or modify it under the terms found in the Artistic License
-2. Other copyrights, terms, and conditions may apply to data transmitted through this module.
-
 =head1 AUTHOR
 
 Sanko Robinson E<lt>sanko@cpan.orgE<gt>
 
+=head1 LICENSE
+
+Copyright (C) 2024-2026 Sanko Robinson.
+
+This library is free software; you can redistribute it and/or modify it under the terms found in the Artistic License
+2. Other copyrights, terms, and conditions may apply to data transmitted through this module.
+
 =begin stopwords
 
-repost reposts login unfollow bsky
+repost reposts login unfollow bsky oauth stream
 
 =end stopwords
 

@@ -7,7 +7,7 @@ build_requires:
   Capture::Tiny: '0'
   Test2::V0: '0'
 configure_requires:
-  Module::Build::Tiny: '0.035'
+  Module::Build::Tiny: '0'
 dynamic_config: 0
 generated_by: 'App::mii v1.0.0, CPAN::Meta::Converter version 2.150012'
 keywords: []
@@ -28,11 +28,14 @@ no_index:
 provides:
   App::bsky:
     file: lib/App/bsky.pm
-    version: '1.00'
+    version: '0.05'
   App::bsky::CLI:
     file: lib/App/bsky.pm
+    version: '0.05'
+recommends:
+  Win32::Console: '0'
 requires:
-  Bluesky: '1.00'
+  Bluesky: '1.01'
   File::HomeDir: '0'
   Getopt::Long: '0'
   JSON::Tiny: '0'
@@ -45,7 +48,7 @@ resources:
   homepage: https://github.com/sanko/App-bsky
   license: http://www.perlfoundation.org/artistic_license_2_0
   repository: https://github.com/sanko/App-bsky.git
-version: '1.00'
+version: '0.05'
 x_authority: cpan:SANKO
 x_ignore:
   - .tidyallrc

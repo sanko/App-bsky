@@ -1,4 +1,4 @@
-requires 'Bluesky', '1.00';
+requires 'Bluesky', '1.01';
 requires 'File::HomeDir';
 requires 'Getopt::Long';
 requires 'JSON::Tiny';
@@ -6,8 +6,9 @@ requires 'Path::Tiny';
 requires 'Pod::Text::Color';
 requires 'Term::ANSIColor';
 requires 'perl', 'v5.38.0';
+recommends 'Win32::Console';
 on configure => sub {
-    requires 'Module::Build::Tiny', '0.035';
+    requires 'Module::Build::Tiny';
 };
 on test => sub {
     requires 'Capture::Tiny';

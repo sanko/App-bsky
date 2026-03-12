@@ -1,13 +1,12 @@
-package App::bsky 1.00 {
+package App::bsky 0.05 {
     use v5.38;
     use utf8;
     use Bluesky;
-    use experimental 'class';
+    use experimental 'class', 'try';
     no warnings 'experimental';
     use open qw[:std :encoding(UTF-8)];
     $|++;
-
-    class App::bsky::CLI {
+    class App::bsky::CLI 0.05 {
         use JSON::Tiny qw[/code_json/];
         use Path::Tiny;
         use File::HomeDir;
@@ -20,9 +19,17 @@ package App::bsky 1.00 {
         #
         ADJUST {
             if ( $^O eq 'MSWin32' ) {
-                require Win32::Console;
-                Win32::Console::OutputCP(65000);
-                binmode STDOUT, ':encoding(cp65000)';
+                try {
+                    require Win32::Console;
+                    Win32::Console::OutputCP(65001);
+                }
+                catch ($e) {
+
+                    #~ warn $e;
+                    #~ warn 'We may have issues with non-ASCII display';
+                }
+                binmode STDOUT, ':encoding(UTF-8)';
+                binmode STDERR, ':encoding(UTF-8)';
             }
             $self->get_config;
             if ( defined $config->{resume}{accessJwt} && defined $config->{resume}{refreshJwt} ) {
@@ -102,14 +109,29 @@ package App::bsky 1.00 {
             $msg = @etc ? sprintf $msg, @etc : $msg;
             my $indent = $msg =~ /^(\s*)/ ? $1 : '';
             $msg = _wrap_and_indent( $config->{settings}{wrap} // 0, length $indent, $msg ) if length $msg;
-            say $msg;
+            try { say $msg; }
+            catch ($e) {
+
+                # Stage 1 fallback: try explicit UTF-8 encode before syswrite
+                try {
+                    my $out = $msg . "\n";
+                    utf8::encode($out) if utf8::is_utf8($out);
+                    syswrite( STDOUT, $out );
+                }
+                catch ($e2) {
+
+                    # Stage 2 fallback: aggressive ASCII sanitization
+                    my $out = $msg;
+                    utf8::encode($out) if utf8::is_utf8($out);
+                    $out =~ s/[^\x20-\x7E]/ /g;
+                    syswrite( STDOUT, $out . " [sanitized]\n" );
+                }
+            }
             1;
         }
 
         method run (@args) {
-
-            #~ use Data::Dump;
-            #~ ddx \@args;
+            $|++;
             return $self->err( 'No subcommand found. Try bsky --help', 1 ) unless scalar @args;
             my $cmd = shift @args;
             $cmd =~ m[^-(h|-help)$] ? $cmd = 'help' : $cmd =~ m[^-V$] ? $cmd = 'VERSION' : $cmd =~ m[^-(v|-version)$] ? $cmd = 'version' : ();
@@ -325,10 +347,197 @@ package App::bsky 1.00 {
         }
         method cmd_tl (@args) { $self->cmd_timeline(@args); }
 
-        method cmd_stream() {
+        method cmd_stream(@args) {
+            GetOptionsFromArray( \@args, 'json|j' => \my $json );
+            require Mojo::IOLoop;    # Ensure Mojo is available for the event loop
+            require Archive::CAR::CID;
+            require Archive::CAR;
+            require Codec::CBOR;
 
-            # Mojo::UserAgent is triggering 'Subroutine attributes must come before the signature' bug in perl 5.38.x
-            return $self->err('Streaming client requires Mojo::UserAgent') unless $Mojo::UserAgent::VERSION;
+            # Keep the loop alive even if the connection drops briefly
+            my $keepalive = Mojo::IOLoop->recurring( 60 => sub { $self->say("[DEBUG] Firehose loop keepalive...") if $ENV{DEBUG}; } );
+            my %profile_cache;
+            my @profile_lru;
+            my $MAX_CACHE     = 1000;
+            my $cache_profile = sub ($p) {
+                my $did = $p->{did};
+                if ( exists $profile_cache{$did} ) {
+                    @profile_lru = grep { $_ ne $did } @profile_lru;
+                }
+                push @profile_lru, $did;
+                $profile_cache{$did} = $p;
+                if ( @profile_lru > $MAX_CACHE ) {
+                    my $oldest = shift @profile_lru;
+                    delete $profile_cache{$oldest};
+                }
+            };
+            my @post_queue;
+            my %dids_to_resolve;
+            my %did_fail_count;
+            my $render_queue = sub {
+                my @to_resolve = grep { ( $did_fail_count{$_} // 0 ) < 5 } keys %dids_to_resolve;
+                if (@to_resolve) {
+                    say "[DEBUG] Resolving " . scalar(@to_resolve) . " DIDs..." if $ENV{DEBUG};
+                    while (@to_resolve) {
+                        my @chunk = splice @to_resolve, 0, 25;
+                        my $res   = $bsky->getProfiles( actors => \@chunk );
+                        if ( ref $res eq 'ARRAY' || ( ref $res eq 'HASH' && $res->{profiles} ) ) {
+                            my @profiles = ref $res eq 'ARRAY' ? @$res : @{ $res->{profiles} };
+                            say "[DEBUG] Resolved " . scalar(@profiles) . " profiles" if $ENV{DEBUG};
+                            for my $p (@profiles) {
+                                $cache_profile->($p);
+                                delete $dids_to_resolve{ $p->{did} };
+                                delete $did_fail_count{ $p->{did} };
+                            }
+
+                            # If some didn't come back in the response, they might be invalid or deleted
+                            # We'll increment their fail count if they are still in dids_to_resolve
+                            for my $did (@chunk) {
+                                if ( exists $dids_to_resolve{$did} ) {
+                                    $did_fail_count{$did}++;
+                                }
+                            }
+                        }
+                        else {
+                            say "[DEBUG] getProfiles failed: " . ( $res // 'undef' ) if $ENV{DEBUG};
+
+                            # Increment fail count for the whole chunk
+                            for my $did (@chunk) {
+                                $did_fail_count{$did}++;
+                            }
+                        }
+                    }
+                }
+                if (@post_queue) {
+                    say "[DEBUG] Processing post queue with " . scalar(@post_queue) . " items" if $ENV{DEBUG};
+                    @post_queue = sort { $a->{record}{createdAt} cmp $b->{record}{createdAt} } @post_queue;
+                }
+                while (@post_queue) {
+                    my $item       = shift @post_queue;
+                    my $repo       = $item->{repo};
+                    my $record     = $item->{record};
+                    my $ts         = $item->{ts};
+                    my $author     = $profile_cache{$repo};
+                    my $handle     = ( ref $author eq 'HASH' ) ? ( $author->{handle}      // $repo ) : $repo;
+                    my $name       = ( ref $author eq 'HASH' ) ? ( $author->{displayName} // '' )    : '';
+                    my $text       = $record->{text} // '[no text]';
+                    my $reply_info = '';
+
+                    if ( $record->{reply} && $record->{reply}{parent} ) {
+                        my $parent_uri = $record->{reply}{parent}{uri};
+                        if ( $parent_uri =~ m[^at://(did:[^/]+)] ) {
+                            my $parent_did     = $1;
+                            my $parent_profile = $profile_cache{$parent_did};
+                            my $parent_handle  = ( ref $parent_profile eq 'HASH' ) ? $parent_profile->{handle} : $parent_did;
+                            $reply_info = color('white') . " [in reply to \@" . $parent_handle . "]";
+                        }
+                    }
+                    try {
+                        $self->say( '%s%s    %s (%s)%s%s', color('white'), $ts, $name, '@' . $handle, $reply_info, color('reset') );
+                        my $indented = $text;
+                        $indented =~ s/^/   /mg;
+                        $self->say($indented);
+                        $self->say("");
+                    }
+                    catch ($e) {
+                        try {
+                            my $out = $text;
+                            utf8::encode($out) if utf8::is_utf8($out);
+                            $out =~ s/[^\x20-\x7E]/ /g;
+                            $self->say( '%s%s    %s (%s)%s [sanitized]', color('white'), $ts, $name, '@' . $handle, $reply_info );
+                            my $indented = $out;
+                            $indented =~ s/^/   /mg;
+                            $self->say($indented);
+                            $self->say("");
+                        }
+                        catch ($e2) { }
+                    }
+                }
+            };
+
+            # Trigger rendering every 5 seconds
+            Mojo::IOLoop->recurring( 5 => sub { $render_queue->() } );
+            my $start_stream;
+            $start_stream = sub {
+                $self->say('[DEBUG] Starting firehose stream...') if $ENV{DEBUG} || 1;
+                my $fh = $bsky->firehose(
+                    sub ( $header, $body, $err ) {
+                        try {
+                            if ( defined $err ) {
+                                warn 'Firehose error: ' . $err;
+
+                                # Always try to reconnect if not explicitly fatal
+                                if ( !$err->fatal ) {
+                                    $self->say('[DEBUG] Attempting to reconnect in 5 seconds...') if $ENV{DEBUG} || 1;
+                                    Mojo::IOLoop->timer( 5 => sub { $start_stream->() } );
+                                }
+                                else {
+                                    $self->say('[DEBUG] Fatal firehose error. Exiting.') if $ENV{DEBUG} || 1;
+                                    Mojo::IOLoop->remove($keepalive);
+                                    Mojo::IOLoop->stop;
+                                }
+                                return;
+                            }
+                            if ($json) {
+                                $self->say( JSON::Tiny::to_json( { header => $header, body => $body } ) );
+                                return;
+                            }
+
+                            # Only process commit events for now
+                            unless ( defined $header->{t} && $header->{t} eq '#commit' ) {
+                                return;
+                            }
+                            for my $op ( @{ $body->{ops} } ) {
+                                next unless $op->{action} eq 'create';
+                                next unless $op->{path} =~ /^app\.bsky\.feed\.post\//;
+                                try {
+                                    # Decode the blocks to find the record
+                                    require Archive::CAR::v1;
+                                    my $car = Archive::CAR::v1->new();
+                                    open my $cfh, '<:raw', \$body->{blocks};
+                                    my %blocks = map { $_->{cid}->to_string => $_->{data} } $car->read($cfh)->blocks->@*;
+                                    require Archive::CAR::CID;    # Ensure it's loaded for conversion
+                                    my $cid_raw = $op->{cid};
+                                    if ( ref $cid_raw eq 'HASH' && exists $cid_raw->{cid_raw} ) {
+                                        $cid_raw = $cid_raw->{cid_raw};
+                                    }
+                                    my $target_cid_obj = Archive::CAR::CID->from_raw($cid_raw);
+                                    my $record_bytes   = $blocks{ $target_cid_obj->to_string };
+                                    next unless $record_bytes;
+                                    require Codec::CBOR;
+                                    my $codec  = Codec::CBOR->new();
+                                    my $record = $codec->decode($record_bytes);
+                                    next unless $record;
+                                    my $repo = $body->{repo};
+                                    my $ts   = $record->{createdAt} // '';
+                                    $ts =~ s/T/ /;
+                                    $ts =~ s/\..*Z//;
+
+                                    # Queue for later rendering
+                                    push @post_queue, { repo => $repo, record => $record, ts => $ts };
+                                    $dids_to_resolve{$repo} = 1 unless exists $profile_cache{$repo};
+                                    if ( $record->{reply} && $record->{reply}{parent} ) {
+                                        my $parent_uri = $record->{reply}{parent}{uri};
+                                        if ( $parent_uri =~ m[^at://(did:[^/]+)] ) {
+                                            my $parent_did = $1;
+                                            $dids_to_resolve{$parent_did} = 1 unless exists $profile_cache{$parent_did};
+                                        }
+                                    }
+                                }
+                                catch ($e) {
+                                    warn "CAR/CBOR decoding error for op on repo " . $body->{repo} . ": $e";
+                                }
+                            }
+                        }
+                        catch ($e) {
+                            warn "Error processing firehose event: $e";
+                        }
+                    }
+                );
+                $fh->start();
+            };
+            $start_stream->();
+            Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
         }
 
         method cmd_thread (@args) {
@@ -661,42 +870,33 @@ package App::bsky 1.00 {
 
         method cmd_chat (@args) {
             my $convos = $bsky->listConvos();
-            if ( ref $convos eq 'At::Error' ) {
-                return $self->err( "Failed to list conversations: " . $convos->message );
-            }
-            unless (@$convos) {
-                return $self->say("No active conversations.");
-            }
+            return $self->err( 'Failed to list conversations: ' . $convos->message ) if ref $convos eq 'At::Error';
+            return $self->say('No active conversations.') unless @$convos;
             for my $convo (@$convos) {
                 my $members = join ', ', map { $_->{handle} } @{ $convo->{members} };
-                $self->say( "[%s] members: %s", $convo->{id}, $members );
+                $self->say( '[%s] members: %s', $convo->{id}, $members );
                 my $messages = $bsky->getMessages( convoId => $convo->{id}, limit => 3 );
                 next if ref $messages eq 'At::Error';
                 my %handles = map { $_->{did} => $_->{handle} } @{ $convo->{members} };
                 for my $msg (@$messages) {
-                    my $text   = $msg->{text}                    // "[Non-text message]";
+                    my $text   = $msg->{text}                    // '[Non-text message]';
                     my $sender = $handles{ $msg->{sender}{did} } // $msg->{sender}{did};
-                    $self->say( "  [%s] %s: %s", $msg->{sentAt}, $sender, $text );
+                    $self->say( '  [%s] %s: %s', $msg->{sentAt}, $sender, $text );
                 }
             }
             return 1;
         }
 
-        method cmd_dm ( $handle, $text, @args ) {
-            $handle // $text // return $self->say("Usage: bsky dm <handle> <message>");
+        method cmd_dm (@args) {
+            GetOptionsFromArray( \@args, 'json!' => \my $json, 'handle|H=s' => \my $handle, 'text|m=s' => \my $text );
+            return $self->cmd_help('dm') if scalar @args || !length $handle;
             my $did = $bsky->resolveHandle($handle);
-            unless ($did) {
-                return $self->err("Could not resolve handle '$handle'");
-            }
-            my $convo_res = $bsky->getConvoForMembers( [$did] );
-            if ( ref $convo_res eq 'At::Error' ) {
-                return $self->err( "Could not initiate conversation: " . $convo_res->message );
-            }
+            return $self->err("Could not resolve handle '$handle'") unless $did;
+            my $convo_res = $bsky->getConvoForMembers( members => [$did] );
+            return $self->err( 'Could not initiate conversation: ' . $convo_res->message ) if ref $convo_res eq 'At::Error';
             my $res = $bsky->sendMessage( $convo_res->{id}, { text => $text } );
-            if ( ref $res eq 'At::Error' ) {
-                return $self->err( "Failed to send message: " . $res->message );
-            }
-            $self->say( "Message sent to $handle. Convo ID: " . $res->{convoId} );
+            return $self->err( 'Failed to send message: ' . $res->message ) if ref $res eq 'At::Error';
+            $self->say( "Message sent to $handle. Convo ID: " . $res->{id} );
             return 1;
         }
 
@@ -715,100 +915,10 @@ package App::bsky 1.00 {
         }
 
         method cmd_version() {
-            $self->say($_) for 'bsky  v' . $App::bsky::VERSION, 'Bluesky.pm v' . $Bluesky::VERSION, 'perl  ' . $^V;
+            $self->say($_)
+                for 'bsky       v' . $App::bsky::VERSION, 'Bluesky.pm v' . $Bluesky::VERSION, 'At.pm      v' . $At::VERSION, 'perl       ' . $^V;
             1;
         }
-    }
+    };
 }
 1;
-__END__
-
-=encoding utf-8
-
-=head1 NAME
-
-App::bsky - A Command-line Bluesky Client
-
-=head1 SYNOPSIS
-
-    bsky [global options] command [command options] [arguments...]
-
-    # Modern OAuth Authentication (Recommended)
-    $ bsky oauth user.bsky.social
-
-    # Traditional Login
-    $ bsky login user.bsky.social password
-
-    # Chat & Messaging
-    $ bsky chat
-    $ bsky dm handle "message"
-
-    $ bsky help
-
-=head1 DESCRIPTION
-
-App::bsky is a command line client for the At protocol backed Bluesky social network.
-
-=head1 COMMANDS
-
-=head2 oauth
-
-Initiates an interactive OAuth 2.0 flow. This is the recommended way to authenticate.
-
-    $ bsky oauth user.bsky.social
-
-=head2 login
-
-Legacy authentication using a handle and app password.
-
-    $ bsky login user.bsky.social app-password-here
-
-=head2 chat
-
-Lists recent conversations and the last few messages in each.
-
-    $ bsky chat
-
-=head2 dm
-
-Sends a direct message to a user.
-
-    $ bsky dm user.bsky.social "Hello from the CLI!"
-
-=head2 timeline (or tl)
-
-Shows your home timeline.
-
-    $ bsky timeline
-
-=head2 post
-
-Creates a new post.
-
-    $ bsky post "Hello Bluesky!"
-
-=head1 See Also
-
-L<At>.pm
-
-L<Bluesky>.pm
-
-L<https://github.com/mattn/bsky> - Original Golang client
-
-=head1 LICENSE
-
-Copyright (C) Sanko Robinson.
-
-This library is free software; you can redistribute it and/or modify it under the terms found in the Artistic License
-2. Other copyrights, terms, and conditions may apply to data transmitted through this module.
-
-=head1 AUTHOR
-
-Sanko Robinson E<lt>sanko@cpan.orgE<gt>
-
-=begin stopwords
-
-
-=end stopwords
-
-=cut

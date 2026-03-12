@@ -30,7 +30,7 @@
    "prereqs" : {
       "configure" : {
          "requires" : {
-            "Module::Build::Tiny" : "0.035"
+            "Module::Build::Tiny" : "0"
          }
       },
       "develop" : {
@@ -59,8 +59,11 @@
          }
       },
       "runtime" : {
+         "recommends" : {
+            "Win32::Console" : "0"
+         },
          "requires" : {
-            "Bluesky" : "1.00",
+            "Bluesky" : "1.01",
             "File::HomeDir" : "0",
             "Getopt::Long" : "0",
             "JSON::Tiny" : "0",
@@ -80,10 +83,11 @@
    "provides" : {
       "App::bsky" : {
          "file" : "lib/App/bsky.pm",
-         "version" : "1.00"
+         "version" : "0.05"
       },
       "App::bsky::CLI" : {
-         "file" : "lib/App/bsky.pm"
+         "file" : "lib/App/bsky.pm",
+         "version" : "0.05"
       }
    },
    "release_status" : "stable",
@@ -101,7 +105,7 @@
          "web" : "https://github.com/sanko/App-bsky"
       }
    },
-   "version" : "1.00",
+   "version" : "0.05",
    "x_authority" : "cpan:SANKO",
    "x_ignore" : [
       ".tidyallrc",

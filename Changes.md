@@ -10,12 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added `oauth` command for a streamlined, interactive authentication flow with an automatic local listener.
 - Implemented `chat` and `dm` commands for managing conversations and sending direct messages via PDS proxying.
-- Enhanced session management to correctly persist and resume full metadata, including DPoP keys and scopes.
-- Improved `show-session` command with detailed diagnostic output.
-- Updated POD documentation with clear usage examples for all new features.
+- Sessions now persist and can be resumed with full metadata including DPoP keys and scopes.
 
-### Fixed
-- Modernized initialization logic to align with the latest architectural changes in At.pm and Bluesky.pm.
+### Changed
+- Improved `show-session` command with detailed diagnostic output.
 
 ## [0.04] - 2024-02-13
 

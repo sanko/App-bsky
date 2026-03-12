@@ -99,6 +99,20 @@ Update profile elements.
 --name          optional, display name
 ```
 
+## oauth
+
+```
+bsky oauth user.bsky.social
+```
+
+Initiates an interactive OAuth 2.0 flow. This is the recommended way to authenticate.
+
+### Options
+
+```
+--redirect      optional, redirect URI for OAuth callback
+```
+
 ## show-session
 
 ```
@@ -113,6 +127,31 @@ Show current session.
 
 ```
 --json              boolean flag; content is printed as JSON objects if given
+```
+
+## chat
+
+```
+bsky chat
+```
+
+Lists recent conversations and the last few messages in each.
+
+## dm
+
+```python
+bsky dm --handle user.bsky.social --text "Hello from the CLI!"
+```
+
+Sends a direct message to a user.
+
+### Options
+
+```
+--handle handle     user handle or DID
+-H handle           alternative to --handle
+--text message      message content
+-m message          alternative to --text
 ```
 
 ## timeline
@@ -133,6 +172,14 @@ Display posts from timeline.
 ```
 --json      boolean flag; content is printed as JSON objects if given
 ```
+
+## stream
+
+```
+bsky stream
+```
+
+Stream posts from the firehose. Note that this requires [Mojo::UserAgent](https://metacpan.org/pod/Mojo%3A%3AUserAgent) to be installed.
 
 ## thread
 
@@ -369,24 +416,6 @@ Show notifications.
 --json              boolean flag; content is printed as JSON objects if given
 ```
 
-## invite-codes
-
-```
-bsky invite-codes
-
-bsky invite-codes --json
-```
-
-Show invite codes.
-
-Note that you must be logged in with the account password to view invite codes.
-
-### Options
-
-```
---json              boolean flag; content is printed as JSON objects if given
-```
-
 ## add-app-password
 
 ```
@@ -471,13 +500,13 @@ Current configuration values include:
 
 [https://github.com/mattn/bsky](https://github.com/mattn/bsky) - Original Golang client
 
-# LICENSE
-
-Copyright (C) Sanko Robinson.
-
-This library is free software; you can redistribute it and/or modify it under the terms found in the Artistic License
-2\. Other copyrights, terms, and conditions may apply to data transmitted through this module.
-
 # AUTHOR
 
 Sanko Robinson <sanko@cpan.org>
+
+# LICENSE
+
+Copyright (C) 2024-2026 Sanko Robinson.
+
+This library is free software; you can redistribute it and/or modify it under the terms found in the Artistic License
+2\. Other copyrights, terms, and conditions may apply to data transmitted through this module.
